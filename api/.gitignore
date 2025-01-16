@@ -1,0 +1,24 @@
+# Node.js dependencies
+node_modules/
+
+# Environment files
+.env
+
+# Logs
+*.log
+
+# Debug and temporary files
+*.pid
+*.seed
+*.swp
+
+# OS-specific files (MacOS, Windows, Linux)
+.DS_Store
+Thumbs.db
+
+# IDE/Editor specific files (e.g., VSCode, JetBrains)
+.vscode/
+.idea/
+
+# Coverage directory for testing
+coverage/
