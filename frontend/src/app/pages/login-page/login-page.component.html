@@ -1,0 +1,52 @@
+<div class="centered-content">
+  <div class="login-box box">
+    <h1 class="title has-text-black is-link mb-4">Login</h1>
+
+    <div class="field">
+      <p class="control has-icons-left">
+        <input #emailInput class="input has-background-light is-medium" type="email" placeholder="Email" />
+        <span class="icon is-small is-left">
+          <i class="fas fa-envelope"></i>
+        </span>
+      </p>
+    </div>
+
+    <div class="field">
+      <p class="control has-icons-left">
+        <input #pwInput class="input has-background-light is-medium" type="password" placeholder="Password" />
+        <span class="icon is-small is-left">
+          <i class="fas fa-lock"></i>
+        </span>
+      </p>
+    </div>
+
+    <div class="field has-text-right">
+      <button class="button is-primary is-medium has-text-white"
+        (click)="onLoginButtonClicked(emailInput.value, pwInput.value)">
+        Login
+      </button>
+    </div>
+
+    <div class="field">
+      <button class="button is-link is-light is-medium is-fullwidth mt-2" (click)="navigateToSignup()">
+        Don't have an account? Sign up
+      </button>
+    </div>
+
+    <!-- Google Sign-In Button -->
+    <div class="field mt-4">
+      <div id="g_id_onload"
+        data-client_id="931212072659-sfnnpu9j3uod34u8uqt7p9nmrovqd46f.apps.googleusercontent.com"
+        data-context="signin"
+        data-ux_mode="popup"
+        data-login_uri="http://localhost:3000/users/google-signin"
+        data-callback="handleGoogleSignIn"
+        data-itp_support="true">
+      </div>
+
+      <div class="g_id_signin" data-type="standard" data-shape="rectangular" data-theme="outline"
+        data-text="signin_with" data-size="large" data-logo_alignment="center">
+      </div>
+    </div>
+  </div>
+</div>

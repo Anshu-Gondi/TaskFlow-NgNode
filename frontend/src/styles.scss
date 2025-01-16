@@ -1,0 +1,144 @@
+/* You can add global styles to this file, and also import other style files */
+
+@import '../node_modules/bulma/sass';
+
+// Import Font (Lato and Nunito)
+@import url('https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Nunito:wght@400;700&display=swap');
+
+// Original Colors
+$Aqua-green: #D6FB00;
+$green: #27d7a1;
+
+// New Color Palette
+$sky-blue: #00BFFF;
+$light-blue: #87CEFA;
+$dark-blue: #005B96;
+$soft-gray: #f0f4f8;
+
+// Fonts and Bulma Overrides
+$family-sans-serif: "Nunito", sans-serif;
+$primary: $sky-blue; // New primary color
+$link: $light-blue;
+$gray-text: #D3D3D3;
+
+// Update Bulma Component Styles
+$control-border-width: 2px;
+$input-border-color: transparent;
+$input-shadow: none;
+
+// Set Custom Global Styles
+html {
+  background: linear-gradient(to right top, $Aqua-green, $green); // Keep original background
+}
+
+html, body {
+  height: 100%;
+}
+
+.centered-content {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+}
+
+.model-box {
+  min-height: 200px;
+  width: 100%;
+  max-width: 580px;
+  background: white;
+  border: 5px;
+  padding: 35px;
+}
+
+.title {
+  font-family: 'Lato';
+  font-size: 24px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: $dark-blue;
+}
+
+// Responsive Styles for Mobile and TV
+@media screen and (max-width: 768px) {
+  .task-manager-container {
+    flex-direction: column;
+    max-width: 100%;
+    max-height: none;
+  }
+
+  .sidebar {
+    width: 100%;
+    border-radius: 0;
+    padding: 20px;
+
+    .list-menu-item {
+      justify-content: center;
+    }
+
+    button {
+      width: 100%;
+    }
+  }
+
+  .tasks-list-container {
+    border-radius: 0;
+    padding: 20px;
+
+    .task {
+      flex-direction: column;
+      align-items: flex-start;
+      padding: 10px;
+    }
+
+    .task-buttons {
+      margin-top: 10px;
+    }
+  }
+
+  .circle-add-button {
+    bottom: 15px;
+    right: 15px;
+    height: 40px;
+    width: 40px;
+  }
+}
+
+@media screen and (min-width: 1200px) {
+  .task-manager-container {
+    max-width: 1920px;
+    max-height: 1080px;
+    padding: 20px;
+  }
+
+  .sidebar {
+    padding: 60px;
+    width: 300px;
+
+    .list-menu-item {
+      font-size: 1.2rem;
+    }
+  }
+
+  .tasks-list-container {
+    padding: 60px;
+  }
+
+  .task {
+    font-size: 1.2rem;
+    padding: 20px;
+  }
+
+  .circle-add-button {
+    height: 60px;
+    width: 60px;
+  }
+}
+
+.g_id_signin {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+  width: auto;
+}
