@@ -2,6 +2,9 @@
   <div class="login-box box">
     <h1 class="title has-text-black is-link mb-4">Login</h1>
 
+    <!-- Error Message -->
+    <p *ngIf="errorMessage" class="has-text-danger">{{ errorMessage }}</p>
+
     <div class="field">
       <p class="control has-icons-left">
         <input #emailInput class="input has-background-light is-medium" type="email" placeholder="Email" />

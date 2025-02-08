@@ -12,6 +12,7 @@ declare global {
 @Component({
   selector: 'app-signup-page',
   imports: [RouterLink],
+  standalone: true,
   templateUrl: './signup-page.component.html',
   styleUrls: ['./signup-page.component.scss'],
 })

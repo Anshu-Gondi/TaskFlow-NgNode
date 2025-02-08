@@ -1,33 +1,37 @@
 import { Injectable } from '@angular/core';
-import { HttpInterceptor, HttpRequest, HttpHandler, HttpEvent, HttpErrorResponse } from '@angular/common/http';
+import {
+  HttpInterceptor,
+  HttpRequest,
+  HttpHandler,
+  HttpEvent,
+  HttpErrorResponse,
+} from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { AuthService } from './auth.service';
-import { catchError, switchMap } from 'rxjs/operators';
+import { catchError, switchMap, take, filter } from 'rxjs/operators';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class WebRequestInterceptor implements HttpInterceptor {
+  private isRefreshing = false;
+
   constructor(private authService: AuthService) {}
 
-  intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-    // Add the access token to the request
+  intercept(
+    req: HttpRequest<any>,
+    next: HttpHandler
+  ): Observable<HttpEvent<any>> {
     const accessToken = this.authService.getAccessToken();
 
     let authReq = req;
     if (accessToken) {
-      authReq = req.clone({
-        setHeaders: {
-          'x-access-token': accessToken,
-        },
-      });
+      authReq = this.addToken(req, accessToken);
     }
 
-    // Handle the request and catch errors
     return next.handle(authReq).pipe(
       catchError((error: HttpErrorResponse) => {
         if (error.status === 401 && error.error === 'jwt expired') {
-          // Access token has expired; try refreshing it
           return this.handle401Error(req, next);
         }
         return throwError(() => error);
@@ -35,20 +39,32 @@ export class WebRequestInterceptor implements HttpInterceptor {
     );
   }
 
-  private handle401Error(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+  private addToken(req: HttpRequest<any>, token: string): HttpRequest<any> {
+    return req.clone({
+      setHeaders: { 'x-access-token': token },
+    });
+  }
+
+  private handle401Error(
+    req: HttpRequest<any>,
+    next: HttpHandler
+  ): Observable<HttpEvent<any>> {
+    if (this.isRefreshing) {
+      return throwError(() => new Error('Token refresh already in progress'));
+    }
+
+    this.isRefreshing = true;
+
     return this.authService.refreshAccessToken().pipe(
+      take(1),
+      filter((newToken: string | null) => newToken !== null),
       switchMap((newToken: string) => {
-        // Retry the failed request with the new token
-        const clonedRequest = req.clone({
-          setHeaders: {
-            'x-access-token': newToken,
-          },
-        });
-        return next.handle(clonedRequest);
+        this.isRefreshing = false;
+        return next.handle(this.addToken(req, newToken));
       }),
       catchError((err) => {
-        // If refreshing the token fails, log out the user
-        this.authService.logout();
+        this.isRefreshing = false; // Set first to avoid any race conditions
+        this.authService.logout(); // Ensure logout is always called
         return throwError(() => err);
       })
     );

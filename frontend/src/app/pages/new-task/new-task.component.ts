@@ -4,37 +4,41 @@ import { Component, OnInit } from '@angular/core';
 
 @Component({
   selector: 'app-new-task',
-  imports:[RouterLink],
+  imports: [RouterLink],
   templateUrl: './new-task.component.html',
   styleUrls: ['./new-task.component.scss'],
 })
 export class NewTaskComponent implements OnInit {
-  listId!: string; // Use definite assignment assertion
+  listId!: string;
 
   constructor(private taskService: TaskService, private route: ActivatedRoute, private router: Router) {}
 
   ngOnInit(): void {
-    // Subscribe to route parameters to get the listId
     this.route.params.subscribe((params: Params) => {
-      this.listId = params['listId'];
-      console.log(this.listId);
+      this.listId = params['listId']; // Fetching listId from route params
+      console.log(this.listId); // For debugging purposes
     });
   }
 
   createTask(title: string): void {
     if (!title.trim()) {
-      alert('Task title cannot be empty.');
+      alert('Task title cannot be empty.'); // Alert if title is empty
       return;
     }
 
+    // Creating a new task by passing the title and listId
     this.taskService.createTasks(title, this.listId).subscribe({
       next: (response: any) => {
-        this.router.navigate(['../'], { relativeTo: this.route }); // Navigate to the parent route
+        this.router.navigate(['../'], { relativeTo: this.route }); // Navigating to the parent route
       },
       error: (error: any) => {
-        console.error('Error creating task:', error);
-        alert('Failed to create task. Check console for details.');
+        console.error('Error creating task:', error); // Logging error if task creation fails
+        alert('Failed to create task. Check console for details.'); // Alerting the user
       },
     });
+  }
+
+  cancel(): void {
+    this.router.navigate(['/lists']);
   }
 }

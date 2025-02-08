@@ -6,12 +6,12 @@
 
       <div class="list-menu">
         <a class="list-menu-item" *ngFor="let list of lists" [routerLink]="['/lists', list._id]"
-          routerLinkActive="is-active" [routerLinkActiveOptions]="{ exact: true }">
+          [routerLinkActive]="['is-active']" [routerLinkActiveOptions]="{ exact: true }">
           <p>{{ list.title }}</p>
         </a>
       </div>
 
-      <button class="button is-primary has-text-white" routerLink="/new-list">
+      <button class="button is-primary has-text-white" [routerLink]="['/new-list']">
         + New List
       </button>
     </div>

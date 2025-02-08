@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
+import { BehaviorSubject, Observable, throwError } from 'rxjs';
+import { map, tap, switchMap, catchError } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root',
@@ -22,7 +22,7 @@ export class AuthService {
       .pipe(
         tap((response) => {
           this.setAccessToken(response.accessToken);
-          this.setIdToken(response.idToken); // Set the id_token
+          this.setIdToken(response.idToken);
           localStorage.setItem('refreshToken', response.refreshToken);
         })
       );
@@ -38,7 +38,7 @@ export class AuthService {
       .pipe(
         tap((response) => {
           this.setAccessToken(response.accessToken);
-          this.setIdToken(response.idToken); // Set the id_token
+          this.setIdToken(response.idToken);
           localStorage.setItem('refreshToken', response.refreshToken);
         })
       );
@@ -50,37 +50,43 @@ export class AuthService {
     localStorage.setItem('idToken', token);
   }
 
-  // Get the id_token from the BehaviorSubject or localStorage
+  // Get the id_token
   getIdToken(): string | null {
     return this.idTokenSubject.value || localStorage.getItem('idToken');
   }
 
   // AuthService signup method
   signup(email: string, password: string): Observable<any> {
-    const signupPayload = { email, password };
-    return this.http.post('http://localhost:3000/users', signupPayload);
+    return this.http.post('http://localhost:3000/users', { email, password });
   }
 
   // Login function
   login(email: string, password: string): Observable<any> {
-    const loginPayload = { email, password };
     return this.http
       .post<{ accessToken: string; refreshToken: string; _id: string }>(
         'http://localhost:3000/users/login',
-        loginPayload
+        { email, password }
       )
       .pipe(
         tap((response) => {
-          this.setAccessToken(response.accessToken); // Set access token
-          localStorage.setItem('refreshToken', response.refreshToken); // Store refresh token
-          localStorage.setItem('_id', response._id); // Store user ID
+          this.setAccessToken(response.accessToken);
+          localStorage.setItem('refreshToken', response.refreshToken);
+          localStorage.setItem('_id', response._id);
         })
       );
   }
 
-  // Get the access token from the BehaviorSubject or localStorage
+  /// Get the access token
   getAccessToken(): string | null {
-    return this.accessTokenSubject.value;
+    const token =
+      this.accessTokenSubject.value || localStorage.getItem('accessToken');
+
+    // If token is missing, throw an error
+    if (!token) {
+      throw new Error('Access token is missing. Please log in again.');
+    }
+
+    return token;
   }
 
   // Set the access token
@@ -91,29 +97,33 @@ export class AuthService {
 
   // Refresh the access token
   refreshAccessToken(): Observable<string> {
-    const refreshToken = localStorage.getItem('refreshToken'); // Stored refresh token
-    const userId = localStorage.getItem('_id'); // User ID
+    const refreshToken = localStorage.getItem('refreshToken');
+    const userId = localStorage.getItem('_id');
 
+    // If refresh token or user ID is missing, logout and throw an error
     if (!refreshToken || !userId) {
-      throw new Error('Refresh token or user ID is missing');
+      this.logout();
+      return throwError(
+        () => new Error('Session expired. Please log in again.')
+      );
     }
 
     return this.http
       .get<{ accessToken: string }>(
         'http://localhost:3000/users/me/access-token',
         {
-          headers: {
-            'x-refresh-token': refreshToken,
-            _id: userId,
-          },
+          headers: { 'x-refresh-token': refreshToken, _id: userId },
         }
       )
       .pipe(
-        tap((response) => {
-          this.setAccessToken(response.accessToken);
-        }),
-        // Map the response to return only the accessToken
-        map((response) => response.accessToken)
+        tap((response) => this.setAccessToken(response.accessToken)),
+        map((response) => response.accessToken),
+        catchError((error) => {
+          this.logout(); // Ensure logout is triggered on failure
+          return throwError(
+            () => new Error('Session expired. Please log in again.')
+          );
+        })
       );
   }
 
@@ -122,36 +132,42 @@ export class AuthService {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('_id');
-    localStorage.removeItem('idToken'); // Clear id_token on logout
+    localStorage.removeItem('idToken');
     this.accessTokenSubject.next(null);
-    this.idTokenSubject.next(null); // Clear the id_token subject
+    this.idTokenSubject.next(null);
   }
 
-  // Make an HTTP request with the access token in headers
+  // Make an authenticated HTTP request
   makeAuthenticatedRequest(
     url: string,
     method: string,
     body?: any
   ): Observable<any> {
-    const accessToken = this.getAccessToken();
+    const accessToken = this.getAccessToken(); // Check if access token is available
     if (!accessToken) {
-      throw new Error('Access token is missing');
+      return throwError(() => new Error('Access token is missing. Please log in again.'));
     }
 
-    const headers = {
-      'Content-Type': 'application/json',
-      accessToken: accessToken, // Attach the access token to the request headers
-    };
+    return this.refreshAccessToken().pipe(
+      switchMap((newAccessToken) => {
+        const headers = {
+          'Content-Type': 'application/json',
+          accessToken: newAccessToken,
+        };
 
-    if (method === 'GET') {
-      return this.http.get(url, { headers });
-    } else if (method === 'POST') {
-      return this.http.post(url, body, { headers });
-    } else if (method === 'PATCH') {
-      return this.http.patch(url, body, { headers });
-    } else if (method === 'DELETE') {
-      return this.http.delete(url, { headers });
-    }
-    return new Observable(); // Add default return for unmatched methods
+        switch (method) {
+          case 'GET':
+            return this.http.get(url, { headers });
+          case 'POST':
+            return this.http.post(url, body, { headers });
+          case 'PATCH':
+            return this.http.patch(url, body, { headers });
+          case 'DELETE':
+            return this.http.delete(url, { headers });
+          default:
+            return throwError(() => new Error('Invalid HTTP method'));
+        }
+      })
+    );
   }
 }

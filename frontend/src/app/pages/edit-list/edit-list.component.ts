@@ -12,6 +12,7 @@ import { List } from '../../models/list.model';
 export class EditListComponent {
   listId!: string; // Use definite assignment assertion
   originalTitle: string = ''; // Display the current list title
+  errorMessage: string = ''; // To store error messages
 
   constructor(
     private taskService: TaskService,
@@ -24,10 +25,16 @@ export class EditListComponent {
     this.route.params.subscribe((params: Params) => {
       this.listId = params['listId'];
       // Fetch the list title for the given listId
-      this.taskService.getLists().subscribe((lists: List[]) => {
-        const list = lists.find((l) => l._id === this.listId);
-        this.originalTitle = list?.title || '';
-      });
+      this.taskService.getLists().subscribe(
+        (lists: List[]) => {
+          const list = lists.find((l) => l._id === this.listId);
+          this.originalTitle = list?.title || '';
+        },
+        (error) => {
+          this.errorMessage = 'Failed to fetch list details';
+          console.error('Error fetching list:', error);
+        }
+      );
     });
   }
 
