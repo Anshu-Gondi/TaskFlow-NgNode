@@ -510,7 +510,6 @@ app.post('/users/google-signin', async (req, res) => {
   }
 
   try {
-    // Verify the credential using the initialized oAuth2Client
     const ticket = await oAuth2Client.verifyIdToken({
       idToken: credential,
       audience: CLIENT_ID,
@@ -518,20 +517,21 @@ app.post('/users/google-signin', async (req, res) => {
 
     const payload = ticket.getPayload();
     const email = payload?.email;
+    const name = payload?.name;
 
     if (!email) {
-      return res.status(400).send({ error: "Google credential is invalid" });
+      return res.status(400).send({ error: "Invalid Google credential" });
     }
 
-    // Use the User model instead of GoogleUser
-    let user = await User.findOne({ email });
+    // ✅ Use GoogleUser model instead of User
+    let user = await GoogleUser.findOne({ email });
     if (!user) {
-      user = new User({ email, name: payload.name });
+      user = new GoogleUser({ email, name });
       await user.save();
     }
 
-    // Generate tokens for the user
-    const refreshToken = await user.createSession(); // Now using the User model's method
+    // ✅ Uses methods defined in googleuser.model.js
+    const refreshToken = await user.createSession();
     const accessToken = await user.generateAccessAuthToken();
 
     res
@@ -544,11 +544,13 @@ app.post('/users/google-signin', async (req, res) => {
         accessToken,
         refreshToken,
       });
-  } catch (e) {
-    console.error("Google Sign-In Error:", e);
-    res.status(400).send({ error: "Google Sign-In failed", details: e.message });
+
+  } catch (err) {
+    console.error("Google Sign-In failed:", err);
+    res.status(400).send({ error: "Google Sign-In failed", details: err.message });
   }
 });
+
 
 const { OAuth2Client } = require('google-auth-library');
 

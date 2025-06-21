@@ -136,9 +136,15 @@ html, body {
   }
 }
 
+
+// Google Sign-In button enhancements
 .g_id_signin {
   margin-top: 20px;
   display: flex;
   justify-content: center;
-  width: auto;
+  filter: drop-shadow(0 0 8px rgba(79, 195, 247, 0.7));
+}
+
+.g_id_onload {
+  filter: drop-shadow(0 0 6px rgba(0, 191, 255, 0.6));
 }

@@ -1,7 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, AfterViewInit } from '@angular/core';
 import { AuthService } from '../../auth.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Router, RouterLink } from '@angular/router';
+import { CommonModule } from '@angular/common';
 
 declare global {
   interface Window {
@@ -9,10 +10,12 @@ declare global {
   }
 }
 
+declare const google: any;
+
 @Component({
   selector: 'app-login-page',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, CommonModule],
   templateUrl: './login-page.component.html',
   styleUrls: ['./login-page.component.scss'],
 })
@@ -21,6 +24,27 @@ export class LoginPageComponent {
 
   constructor(private authService: AuthService, private router: Router) {
     window.handleGoogleSignIn = this.handleGoogleSignIn.bind(this);
+  }
+
+  ngAfterViewInit() {
+    if (typeof google !== 'undefined') {
+      google.accounts.id.initialize({
+        client_id: '931212072659-sfnnpu9j3uod34u8uqt7p9nmrovqd46f.apps.googleusercontent.com',
+        callback: this.handleGoogleSignIn.bind(this),
+        ux_mode: 'popup',
+      });
+
+      google.accounts.id.renderButton(
+        document.getElementById('googleSignInDiv'),
+        {
+          theme: 'outline',
+          size: 'large',
+          type: 'standard',
+        }
+      );
+    } else {
+      console.error('Google script not loaded');
+    }
   }
 
   onLoginButtonClicked(email: string, password: string) {
