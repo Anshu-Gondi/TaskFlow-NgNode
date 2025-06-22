@@ -1,78 +1,99 @@
 @import '../../../styles.scss';
 
-.centered-content {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh; // Full viewport height
-  background: linear-gradient(to right, #4facfe, #00f2fe); // Gradient background
-  padding: 20px;
-}
-
-.login-box {
+.login-box,
+.signup-box {
   padding: 40px;
   max-width: 400px;
   width: 100%;
-  background-color: #ffffff; // White background for a clean design
-  border-radius: 10px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); // Light shadow for elevation
-}
+  background-color: white;
+  border-radius: 14px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  transition: box-shadow 0.3s ease;
 
-.title {
-  font-family: 'Nunito', sans-serif;
-  font-size: 2rem;
-  color: #005b96; // Dark blue for title color
-  text-align: center;
-}
+  .title {
+    font-family: 'Nunito', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: black;
+    text-align: center;
+    margin-bottom: 30px;
+  }
 
-.input {
-  border-radius: 5px;
-  font-size: 1rem;
-  box-shadow: none;
-  border: 1px solid #ddd; // Soft border
-}
+  .field {
+    margin-bottom: 18px;
+  }
 
-.button {
-  border-radius: 5px;
-  font-weight: bold;
-}
+  .input {
+    padding: 12px 14px;
+    border-radius: 8px;
+    font-size: 1rem;
+    background-color: #f1f5ff; // slight contrast
+    border: 1px solid #d0d7e2;
 
-button.is-primary {
-  background-color: #00bfff;
-  border: none;
-}
+    &:focus {
+      outline: none;
+      border-color: #00BFFF;
+      box-shadow: 0 0 0 2px rgba(0, 191, 255, 0.2);
+    }
+  }
 
-button.is-link.is-light {
-  color: #005b96;
-  background-color: #f0f4f8;
-  border: none;
-  transition: background-color 0.3s ease;
-}
+  .icon.is-left {
+    color: #888;
+  }
 
-button.is-link.is-light:hover {
-  background-color: #d3e8ff; // Light blue hover effect
-}
+  .button.is-primary {
+    width: 100%;
+    font-weight: 600;
+    font-size: 1rem;
+    border: none;
+    border-radius: 8px;
+    background-color: #00BFFF;
+    transition: background-color 0.3s ease;
 
-button.is-fullwidth {
-  width: 100%;
-}
+    &:hover {
+      background-color: darken(#00BFFF, 8%);
+    }
+  }
 
-.icon {
-  margin-right: 5px;
+  .button.is-link.is-light {
+    width: 100%;
+    font-size: 0.95rem;
+    padding: 10px;
+    background-color: #f0f4f8;
+    color: #005B96;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+
+    &:hover {
+      background-color: #dceeff;
+    }
+  }
+
+  #googleSignInDiv {
+    display: flex;
+    justify-content: center;
+    margin-top: 18px;
+
+    .g_id_signin {
+      width: 100%;
+      max-width: 300px;
+    }
+  }
 }
 
 @media screen and (max-width: 768px) {
-  .login-box {
-    padding: 20px;
-  }
+  .login-box,
+  .signup-box {
+    padding: 24px;
 
-  .title {
-    font-size: 1.5rem;
-  }
+    .title {
+      font-size: 1.5rem;
+    }
 
-  .input,
-  .button {
-    font-size: 1rem;
+    .input,
+    .button {
+      font-size: 1rem;
+    }
   }
 }
-
