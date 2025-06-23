@@ -48,6 +48,12 @@ export class SignupPageComponent {
   }
 
   onSignupButtonClicked(email: string, password: string) {
+    this.errorMessage = ''; // Reset previous error message
+    if (!email || !password) {
+      this.errorMessage = 'Email and password are required!';
+      return;
+    }
+
     this.authService.signup(email, password).subscribe({
       next: (response: any) => {
         console.log('Signup successful:', response);

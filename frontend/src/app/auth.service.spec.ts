@@ -211,4 +211,47 @@ describe('AuthService', () => {
       ).toThrowError('Access token is missing. Please log in again.');
     });
   });
+
+  describe('signup', () => {
+    it('should call signup API with email and password', () => {
+      const mockEmail = 'test@example.com';
+      const mockPassword = 'test123';
+      const mockResponse = { message: 'Signup success' };
+
+      service.signup(mockEmail, mockPassword).subscribe((res) => {
+        expect(res).toEqual(mockResponse);
+      });
+
+      const req = httpMock.expectOne('http://localhost:3000/users');
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toEqual({
+        email: mockEmail,
+        password: mockPassword,
+      });
+
+      req.flush(mockResponse);
+    });
+  });
+
+  describe('getAccessToken / setAccessToken', () => {
+    it('should store and retrieve the access token', () => {
+      const mockToken = 'my-token';
+      service.setAccessToken(mockToken);
+      expect(service.getAccessToken()).toBe(mockToken);
+    });
+
+    it('should throw error if access token is missing', () => {
+      localStorage.removeItem('accessToken');
+      expect(() => service.getAccessToken()).toThrowError('Access token is missing. Please log in again.');
+    });
+  });
+
+  describe('getIdToken / setIdToken', () => {
+    it('should store and retrieve the idToken', () => {
+      const mockIdToken = 'id-token-xyz';
+      service.setIdToken(mockIdToken);
+      expect(service.getIdToken()).toBe(mockIdToken);
+    });
+  });
+
 });

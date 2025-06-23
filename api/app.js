@@ -229,7 +229,7 @@ app.delete("/lists/:id", authenicate, async (req, res) => {
 // Function to delete all tasks associated with a given list ID
 async function deleteTasksFromList(listId) {
   try {
-    await Task.deleteMany({ listId }); // Assuming tasks have a `listId` field
+    await Task.deleteMany({ _listId: listId });
   } catch (error) {
     console.error(`Error deleting tasks for list ${listId}:`, error);
     throw error; // Rethrow the error to handle it in the calling function
@@ -443,8 +443,11 @@ app.post('/users', (req, res) => {
         .send(sanitizedUser);
     })
     .catch((e) => {
-      console.error("Error:", e);
-      res.status(400).send({ error: e.message || e });
+      console.error("Login Error:", e);
+      let message = typeof e === 'string'
+        ? e
+        : e.error || e.message || "Invalid email or password";
+      res.status(400).send({ error: message });
     });
 });
 
@@ -483,7 +486,10 @@ app.post('/users/login', (req, res) => {
     })
     .catch((e) => {
       console.error("Login Error:", e);
-      res.status(400).send({ error: "Invalid email or password" });
+      let message = typeof e === 'string'
+        ? e
+        : e.error || e.message || "Invalid email or password";
+      res.status(400).send({ error: message });
     });
   });
   
@@ -575,6 +581,11 @@ app.get('/users/me/token-id', VerifySession, (req, res) => {
     });
 });
 
-app.listen(port, () => {
-  console.log(`Server is listening on port ${port}`);
-});
+if (require.main === module) {
+  const port = process.env.PORT || 3000;
+  app.listen(port, () => {
+    console.log(`Server is listening on port ${port}`);
+  });
+}
+
+module.exports = app;

@@ -12,7 +12,7 @@ describe('SignupPageComponent', () => {
   let routerSpy: jasmine.SpyObj<Router>;
 
   beforeEach(async () => {
-    const authSpy = jasmine.createSpyObj('AuthService', ['signup', 'googleSignUp']);
+    const authSpy = jasmine.createSpyObj('AuthService', ['signup', 'googleSignIn']);
     const routerSpyObj = jasmine.createSpyObj('Router', ['navigate']);
 
     await TestBed.configureTestingModule({
@@ -53,24 +53,46 @@ describe('SignupPageComponent', () => {
     expect(console.error).toHaveBeenCalledWith('Signup failed:', errorResponse.message);
   });
 
-  it('should call googleSignUp and navigate on success', () => {
-    authServiceSpy.googleSignUp.and.returnValue(of({}));
+  it('should show error if email or password is missing', () => {
+    component.onSignupButtonClicked('', ''); // both missing
+    expect(component.errorMessage).toBe('Email and password are required!');
+
+    component.onSignupButtonClicked('test@example.com', '');
+    expect(component.errorMessage).toBe('Email and password are required!');
+  });
+
+  it('should not call login if email or password is missing', () => {
+    component.onSignupButtonClicked('', 'password');
+    expect(authServiceSpy.signup).not.toHaveBeenCalled();
+
+    component.onSignupButtonClicked('email@example.com', '');
+    expect(authServiceSpy.signup).not.toHaveBeenCalled();
+  });
+
+  it('should call googleSignIn and navigate on success', () => {
+    authServiceSpy.googleSignIn.and.returnValue(of({}));
 
     component.handleGoogleSignIn({ credential: 'google-token' });
 
-    expect(authServiceSpy.googleSignUp).toHaveBeenCalledWith('google-token');
+    expect(authServiceSpy.googleSignIn).toHaveBeenCalledWith('google-token');
     expect(routerSpy.navigate).toHaveBeenCalledWith(['lists']);
   });
+
+  it('should set errorMessage if Google credential is missing', () => {
+    component.handleGoogleSignIn({});
+    expect(component.errorMessage).toBe('Google Sign-In failed. Please try again.');
+  });
+
 
   it('should log error message on Google sign-up failure', () => {
     const errorResponse = new Error('Google Sign-Up failed');
     spyOn(console, 'error');
-    authServiceSpy.googleSignUp.and.returnValue(throwError(() => errorResponse));
+    authServiceSpy.googleSignIn.and.returnValue(throwError(() => errorResponse));
 
     component.handleGoogleSignIn({ credential: 'google-token' });
 
-    expect(authServiceSpy.googleSignUp).toHaveBeenCalledWith('google-token');
-    expect(console.error).toHaveBeenCalledWith('Google Sign-Up failed:', errorResponse);
+    expect(authServiceSpy.googleSignIn).toHaveBeenCalledWith('google-token');
+    expect(console.error).toHaveBeenCalledWith('Google Sign-In failed:', errorResponse);
   });
 
   it('should navigate to login page when navigateToLogin is called', () => {

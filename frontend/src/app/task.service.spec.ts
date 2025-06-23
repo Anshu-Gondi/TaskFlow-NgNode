@@ -113,4 +113,103 @@ describe('TaskService', () => {
       });
     });
   });
+    describe('createTasks', () => {
+    it('should create a new task in the list', () => {
+      const mockToken = 'mock-token';
+      const listId = 'list-1';
+      const taskTitle = 'New Task';
+      const mockTask = { _id: 'task-1', title: taskTitle, _listId: listId, completed: false,};
+      authServiceSpy.getAccessToken.and.returnValue(mockToken);
+      webRequestServiceSpy.post.and.returnValue(of(mockTask));
+
+      service.createTasks(taskTitle, listId).subscribe(task => {
+        expect(task).toEqual(mockTask);
+        expect(webRequestServiceSpy.post).toHaveBeenCalledWith(
+          `lists/${listId}/tasks`,
+          { title: taskTitle },
+          { Authorization: `Bearer ${mockToken}` }
+        );
+      });
+    });
+  });
+
+  describe('updateTask', () => {
+    it('should update a task title', () => {
+      const mockToken = 'mock-token';
+      const listId = 'list-1';
+      const taskId = 'task-1';
+      const newTitle = 'Updated Task';
+      const mockTask = { _id: taskId, title: newTitle, _listId: listId, completed: false, };
+      authServiceSpy.getAccessToken.and.returnValue(mockToken);
+      webRequestServiceSpy.patch.and.returnValue(of(mockTask));
+
+      service.updateTask(listId, taskId, newTitle).subscribe(task => {
+        expect(task).toEqual(mockTask);
+        expect(webRequestServiceSpy.patch).toHaveBeenCalledWith(
+          `lists/${listId}/tasks/${taskId}`,
+          { title: newTitle },
+          { Authorization: `Bearer ${mockToken}` }
+        );
+      });
+    });
+  });
+
+  describe('deleteTask', () => {
+    it('should delete a task by ID', () => {
+      const mockToken = 'mock-token';
+      const listId = 'list-1';
+      const taskId = 'task-1';
+      authServiceSpy.getAccessToken.and.returnValue(mockToken);
+      webRequestServiceSpy.delete.and.returnValue(of(void 0));
+
+      service.deleteTask(listId, taskId).subscribe(response => {
+        expect(response).toBeUndefined();
+        expect(webRequestServiceSpy.delete).toHaveBeenCalledWith(
+          `lists/${listId}/tasks/${taskId}`,
+          { Authorization: `Bearer ${mockToken}` }
+        );
+      });
+    });
+  });
+
+  describe('deleteList', () => {
+    it('should delete a list by ID', () => {
+      const mockToken = 'mock-token';
+      const listId = 'list-1';
+      authServiceSpy.getAccessToken.and.returnValue(mockToken);
+      webRequestServiceSpy.delete.and.returnValue(of(void 0));
+
+      service.deleteList(listId).subscribe(response => {
+        expect(response).toBeUndefined();
+        expect(webRequestServiceSpy.delete).toHaveBeenCalledWith(
+          `lists/${listId}`,
+          { Authorization: `Bearer ${mockToken}` }
+        );
+      });
+    });
+  });
+
+  describe('complete', () => {
+    it('should toggle task completion', () => {
+      const mockToken = 'mock-token';
+      const task = {
+        _id: 'task-1',
+        _listId: 'list-1',
+        title: 'Test Task',
+        completed: false,
+      };
+      authServiceSpy.getAccessToken.and.returnValue(mockToken);
+      webRequestServiceSpy.patch.and.returnValue(of(void 0));
+
+      service.complete(task).subscribe(response => {
+        expect(response).toBeUndefined();
+        expect(webRequestServiceSpy.patch).toHaveBeenCalledWith(
+          `lists/${task._listId}/tasks/${task._id}`,
+          { completed: true },
+          { Authorization: `Bearer ${mockToken}` }
+        );
+      });
+    });
+  });
+
 });

@@ -68,6 +68,17 @@ describe('LoginPageComponent', () => {
     );
   });
 
+  it('should show error if email or password is missing', () => {
+    component.onLoginButtonClicked('', ''); // both missing
+    expect(component.errorMessage).toBe('Email and password are required!');
+
+    component.onLoginButtonClicked('test@example.com', ''); // only password missing
+    expect(component.errorMessage).toBe('Email and password are required!');
+
+    component.onLoginButtonClicked('', 'test123'); // only email missing
+    expect(component.errorMessage).toBe('Email and password are required!');
+  });
+
   it('should navigate to signup page', () => {
     component.navigateToSignup();
     expect(routerSpy.navigate).toHaveBeenCalledWith(['/signup']);
@@ -85,5 +96,24 @@ describe('LoginPageComponent', () => {
       'google_jwt_token'
     );
     expect(routerSpy.navigate).toHaveBeenCalledWith(['lists']);
+  });
+
+  it('should handle Google sign-in error', () => {
+    const mockResponse = { credential: 'google_jwt_token' };
+    const error = new Error('Google Sign-In failed');
+    spyOn(console, 'error');
+
+    authServiceSpy.googleSignIn.and.returnValue(throwError(() => error));
+
+    component.handleGoogleSignIn(mockResponse);
+
+    expect(authServiceSpy.googleSignIn).toHaveBeenCalledWith('google_jwt_token');
+    expect(component.errorMessage).toBe('Google Sign-In failed. Please try again.');
+    expect(console.error).toHaveBeenCalledWith('Google Sign-In failed:', error);
+  });
+
+  it('should show error if Google credential is missing', () => {
+    component.handleGoogleSignIn({});
+    expect(component.errorMessage).toBe('Google Sign-In failed. Please try again.');
   });
 });
