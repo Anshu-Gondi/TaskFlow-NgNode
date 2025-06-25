@@ -276,7 +276,7 @@ app.get("/lists/:listId/tasks", authenicate, async (req, res) => {
  */
 app.post("/lists/:listId/tasks", authenicate, async (req, res) => {
   const { listId } = req.params;
-  const { title } = req.body;
+  const { title, priority = 0, dueDate = null } = req.body;
 
   try {
     // Validate listId format
@@ -303,6 +303,8 @@ app.post("/lists/:listId/tasks", authenicate, async (req, res) => {
     const newTask = new Task({
       title,
       _listId: listId,
+      priority,
+      dueDate
     });
 
     const newTaskDoc = await newTask.save();
@@ -558,6 +560,7 @@ app.post('/users/google-signin', async (req, res) => {
 });
 
 
+
 const { OAuth2Client } = require('google-auth-library');
 
 // Load the Client ID from environment variables
@@ -587,5 +590,23 @@ if (require.main === module) {
     console.log(`Server is listening on port ${port}`);
   });
 }
+
+/**
+ * POST /ai/schedule
+ * Purpose: Generate and return a schedule for user
+ */
+const axios = require('axios');
+
+app.post('/ai/schedule', authenicate, async (req, res) => {
+  try {
+    const { tasks } = req.body;
+    const { data } = await axios.post('http://localhost:5001/api/schedule', { tasks });
+    res.status(200).json(data);
+  } catch (err) {
+    console.error("AI Scheduler Error:", err.toString());
+    res.status(err.response?.status || 500).send({ error: 'AI service failed' });
+  }
+});
+
 
 module.exports = app;

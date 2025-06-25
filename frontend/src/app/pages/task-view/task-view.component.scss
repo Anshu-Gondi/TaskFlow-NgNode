@@ -151,3 +151,17 @@
     background-color: $dark-blue; // Darker blue on hover
   }
 }
+
+.task-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.task-title {
+  font-size: 1.1rem;
+}
+
+.task-meta {
+  font-size: 0.9rem;
+  color: #888;
+}

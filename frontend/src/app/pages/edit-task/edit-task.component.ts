@@ -34,22 +34,20 @@ export class EditTaskComponent implements OnInit {
     }
   }
 
-  updateTask(title: string): void {
-    // Check if listId or taskId is missing
-    if (!this.listId || !this.taskId) {
-      alert('List ID or Task ID is missing. Cannot update the task.');
-      return;
-    }
-
-    // Check if task title is empty
+  updateTask(title: string, priority: number, dueDate: string): void {
     if (!title.trim()) {
       alert('Task title cannot be empty.');
       return;
     }
 
-    // Call the service to update the task
-    this.taskService.updateTask(this.listId, this.taskId, title).subscribe(
-      (updatedTask: Task) => {
+    const updateData = {
+      title,
+      priority: isNaN(priority) ? 0 : priority,
+      dueDate: dueDate || null,
+    };
+
+    this.taskService.updateTask(this.listId, this.taskId, updateData).subscribe(
+      () => {
         alert('Task updated successfully.');
         this.router.navigate(['/lists', this.listId]);
       },

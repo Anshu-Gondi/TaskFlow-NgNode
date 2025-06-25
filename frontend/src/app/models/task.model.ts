@@ -1,13 +1,13 @@
 export class Task {
-  _id: string;
-  title: string;
-  _listId: string;
-  completed: boolean;
+  _id!: string;
+  title!: string;
+  _listId!: string;
+  completed!: boolean;
+  priority?: number;
+  dueDate?: string;
+  applied?: boolean;
 
-  constructor(_id: string, title: string, _listId: string, completed: boolean) {
-    this._id = _id;
-    this.title = title;
-    this._listId = _listId;
-    this.completed = completed;
+  constructor(init?: Partial<Task>) {
+    Object.assign(this, init);
   }
 }

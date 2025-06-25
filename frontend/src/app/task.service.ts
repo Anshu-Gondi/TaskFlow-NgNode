@@ -5,6 +5,7 @@ import { Observable, of, throwError } from 'rxjs';
 import { Task } from './models/task.model';
 import { List } from './models/list.model';
 import { AuthService } from './auth.service';
+import { switchMap, map } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root',
@@ -65,20 +66,22 @@ export class TaskService {
     );
   }
 
-  createTasks(title: string, listId: string): Observable<Task> {
-    const token = this.authService.getAccessToken(); // Get the access token from auth service
+  createTasks(taskData: any, listId: string): Observable<Task> {
+    const token = this.authService.getAccessToken();
     if (!token) {
       throw new Error('Access token is missing');
     }
 
-    // Pass headers to the request
-    return this.webRequestService.post<Task>(
-      `lists/${listId}/tasks`,
-      { title },
-      {
+    return this.webRequestService
+      .post<Task>(`lists/${listId}/tasks`, taskData, {
         Authorization: `Bearer ${token}`,
-      }
-    );
+      })
+      .pipe(
+        catchError((error) => {
+          console.error('Error creating task:', error);
+          return throwError(() => error);
+        })
+      );
   }
 
   deleteList(listId: string): Observable<void> {
@@ -88,17 +91,16 @@ export class TaskService {
     }
 
     // Use the WebRequestService to make the DELETE request with headers
-    return this.webRequestService.delete(
-      `lists/${listId}`,
-      {
+    return this.webRequestService
+      .delete(`lists/${listId}`, {
         Authorization: `Bearer ${token}`,
-      }
-    ).pipe(
-      catchError((error) => {
-        console.error('Error deleting list:', error);
-        return throwError(() => error);
       })
-    );
+      .pipe(
+        catchError((error) => {
+          console.error('Error deleting list:', error);
+          return throwError(() => error);
+        })
+      );
   }
 
   deleteTask(listId: string, taskId: string): Observable<void> {
@@ -108,17 +110,16 @@ export class TaskService {
     }
 
     // Use the WebRequestService to make the DELETE request with headers
-    return this.webRequestService.delete(
-      `lists/${listId}/tasks/${taskId}`,
-      {
+    return this.webRequestService
+      .delete(`lists/${listId}/tasks/${taskId}`, {
         Authorization: `Bearer ${token}`,
-      }
-    ).pipe(
-      catchError((error) => {
-        console.error('Error deleting task:', error);
-        return throwError(() => error);
       })
-    );
+      .pipe(
+        catchError((error) => {
+          console.error('Error deleting task:', error);
+          return throwError(() => error);
+        })
+      );
   }
 
   updateList(listId: string, title: string): Observable<List> {
@@ -128,39 +129,42 @@ export class TaskService {
     }
 
     // Use the WebRequestService to send a PATCH request
-    return this.webRequestService.patch<List>(
-      `lists/${listId}`,
-      { title },
-      {
-        Authorization: `Bearer ${token}`,
-      }
-    ).pipe(
-      catchError((error) => {
-        console.error('Error updating list:', error);
-        return throwError(() => error);
-      })
-    );
+    return this.webRequestService
+      .patch<List>(
+        `lists/${listId}`,
+        { title },
+        {
+          Authorization: `Bearer ${token}`,
+        }
+      )
+      .pipe(
+        catchError((error) => {
+          console.error('Error updating list:', error);
+          return throwError(() => error);
+        })
+      );
   }
 
-  updateTask(listId: string, taskId: string, title: string): Observable<Task> {
-    const token = this.authService.getAccessToken(); // Get the access token from auth service
+  updateTask(
+    listId: string,
+    taskId: string,
+    updateData: any
+  ): Observable<Task> {
+    const token = this.authService.getAccessToken();
     if (!token) {
       throw new Error('Access token is missing');
     }
 
-    // Use the WebRequestService to send a PATCH request
-    return this.webRequestService.patch<Task>(
-      `lists/${listId}/tasks/${taskId}`,
-      { title },
-      {
+    return this.webRequestService
+      .patch<Task>(`lists/${listId}/tasks/${taskId}`, updateData, {
         Authorization: `Bearer ${token}`,
-      }
-    ).pipe(
-      catchError((error) => {
-        console.error('Error updating task:', error);
-        return throwError(() => error);
       })
-    );
+      .pipe(
+        catchError((error) => {
+          console.error('Error updating task:', error);
+          return throwError(() => error);
+        })
+      );
   }
 
   complete(task: Task): Observable<void> {
@@ -176,6 +180,22 @@ export class TaskService {
       {
         Authorization: `Bearer ${token}`,
       }
+    );
+  }
+
+  getAiSchedule(listId: string): Observable<Task[]> {
+    const token = this.authService.getAccessToken();
+    if (!token) throw new Error('Access token missing');
+
+    return this.getTasks(listId).pipe(
+      switchMap((tasks) =>
+        this.webRequestService.post<{ scheduled: Task[] }>(
+          'ai/schedule',
+          { tasks },
+          { Authorization: `Bearer ${token}` }
+        )
+      ),
+      map((response) => response.scheduled)
     );
   }
 }

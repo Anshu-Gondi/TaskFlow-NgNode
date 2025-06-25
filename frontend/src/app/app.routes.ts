@@ -6,6 +6,7 @@ import { LoginPageComponent } from './pages/login-page/login-page.component';
 import { SignupPageComponent } from './pages/signup-page/signup-page.component';
 import { EditListComponent } from './pages/edit-list/edit-list.component';
 import { EditTaskComponent } from './pages/edit-task/edit-task.component';
+import { AiSchedulerComponent } from './pages/ai-scheduler/ai-scheduler.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
@@ -18,4 +19,5 @@ export const routes: Routes = [
   { path: 'lists/:listId', component: TaskViewComponent },
   { path: 'lists/:listId/tasks', component: TaskViewComponent },
   { path: 'lists/:listId/new-task', component: NewTaskComponent },
+  { path: 'lists/:listId/ai-scheduler', component: AiSchedulerComponent }
 ];

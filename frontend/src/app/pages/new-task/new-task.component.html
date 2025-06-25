@@ -2,19 +2,20 @@
   <div class="model-box">
     <h1 class="title">Create a new task</h1>
 
-    <input
-      #taskTitleInput
-      class="input has-background-light is-medium"
-      type="text"
-      placeholder="Enter task name..."
-    />
+    <input #taskTitleInput class="input has-background-light is-medium" type="text" placeholder="Enter task name..." />
     <br /><br />
+
+    <input #taskPriorityInput class="input is-medium" type="number" placeholder="Priority (optional)" />
+    <br /><br />
+
+    <input #taskDueDateInput class="input is-medium" type="date" />
+    <br /><br />
+
     <div class="buttons is-right">
       <button class="button is-medium" (click)="cancel()">Cancel</button>
-
       <button
         class="button is-link has-text-white is-medium"
-        (click)="createTask(taskTitleInput.value)"
+        (click)="createTask(taskTitleInput.value, taskPriorityInput.valueAsNumber, taskDueDateInput.value)"
       >
         Create
       </button>
