@@ -1,21 +1,37 @@
-<div class="centered-content">
-  <div class="model-box">
-    <h1 class="title">Create a new task</h1>
+<div class="new-task-wrapper">
+  <div class="new-task-card">
+    <h1 class="title has-text-warning">🗓️ Create a New Task</h1>
 
-    <input #taskTitleInput class="input has-background-light is-medium" type="text" placeholder="Enter task name..." />
-    <br /><br />
+    <input
+      #taskTitleInput
+      class="input is-medium task-input"
+      type="text"
+      placeholder="Enter task name…"
+    />
 
-    <input #taskPriorityInput class="input is-medium" type="number" placeholder="Priority (optional)" />
-    <br /><br />
+    <label class="label mt-4 has-text-weight-semibold">Priority</label>
+    <div class="select is-medium is-fullwidth">
+      <select #taskPriorityInput>
+        <option value="low">Low</option>
+        <option value="medium">Medium</option>
+        <option value="high">High</option>
+        <option value="urgent">Urgent</option>
+      </select>
+    </div>
 
-    <input #taskDueDateInput class="input is-medium" type="date" />
-    <br /><br />
+    <label class="label mt-4 has-text-weight-semibold">Due Date</label>
+    <input #taskDueDateInput class="input is-medium task-input" type="date" />
 
-    <div class="buttons is-right">
-      <button class="button is-medium" (click)="cancel()">Cancel</button>
+    <div class="button-row">
+      <button class="button is-light cancel-btn" (click)="cancel()">Cancel</button>
+
       <button
-        class="button is-link has-text-white is-medium"
-        (click)="createTask(taskTitleInput.value, taskPriorityInput.valueAsNumber, taskDueDateInput.value)"
+        class="button is-link create-btn"
+        (click)="createTask(
+          taskTitleInput.value,
+          taskPriorityInput.value,
+          taskDueDateInput.value
+        )"
       >
         Create
       </button>

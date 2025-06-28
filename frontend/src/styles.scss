@@ -148,3 +148,31 @@ html, body {
 .g_id_onload {
   filter: drop-shadow(0 0 6px rgba(0, 191, 255, 0.6));
 }
+
+// Utility Text Styles
+.text-primary {
+  color: $sky-blue;
+}
+.text-muted {
+  color: $gray-text;
+}
+.text-center {
+  text-align: center;
+}
+.text-bold {
+  font-weight: bold;
+}
+
+// Shared Box Card Style
+.box-card {
+  background: white;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+// Common Button Variant
+.button-rounded {
+  border-radius: 10px;
+  font-weight: 600;
+}

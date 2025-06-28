@@ -55,7 +55,7 @@ describe('NewTaskComponent', () => {
     createButton.click();
 
     expect(mockTaskService.createTasks).toHaveBeenCalledWith(
-      'Test Task',
+      { title: 'Test Task', priority: 0, dueDate: null },
       '123'
     );
   });

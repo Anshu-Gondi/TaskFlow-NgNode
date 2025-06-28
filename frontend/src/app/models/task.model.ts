@@ -6,6 +6,7 @@ export class Task {
   priority?: number;
   dueDate?: string;
   applied?: boolean;
+  priorityLabel?: 'low' | 'medium' | 'high' | 'urgent';
 
   constructor(init?: Partial<Task>) {
     Object.assign(this, init);

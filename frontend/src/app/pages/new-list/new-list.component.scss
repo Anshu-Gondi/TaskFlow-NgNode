@@ -1,76 +1,76 @@
 @import '../../../styles.scss';
 
-.centered-content {
+/* full‑viewport centering */
+.new-list-wrapper {
+  min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
-  padding: 20px;
-  box-sizing: border-box;
+  padding: 24px;
+  background: linear-gradient(135deg, #b5ffb7 0%, #27d7a1 100%);
 }
 
-.model-box {
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-  padding: 20px;
-  max-width: 400px;
+/* glass‑card container */
+.new-list-card {
   width: 100%;
-  box-sizing: border-box;
-}
-
-.title {
-  font-size: 1.5rem;
-  text-align: left;
-  margin-bottom: 20px;
-}
-
-.input {
-  width: 100%;
-  padding: 10px;
-  font-size: 1rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-}
-
-.buttons {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-}
-
-.button {
-  padding: 10px 20px;
-  font-size: 1rem;
-}
-
-@media screen and (max-width: 768px) {
-  .model-box {
-    padding: 15px;
-  }
+  max-width: 480px;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(6px);
+  border-radius: 16px;
+  padding: 40px 32px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  text-align: center;
 
   .title {
-    font-size: 1.2rem;
+    font-weight: 800;
+    font-size: 1.8rem;
+    margin-bottom: 28px;
+    letter-spacing: 1px;
   }
 
-  .button {
-    font-size: 0.9rem;
-    padding: 8px 16px;
+  .list-input {
+    width: 100%;
+    border-radius: 10px;
+    box-shadow: none;
+    padding: 14px 16px;
+    border: 2px solid $soft-gray;
+
+    &:focus {
+      border-color: $sky-blue;
+      box-shadow: 0 0 0 4px rgba($sky-blue, 0.25);
+    }
+  }
+
+  .button-row {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 28px;
+
+    @media (max-width: 420px) {
+      flex-direction: column;
+      gap: 8px;
+
+      .button {
+        width: 100%;
+      }
+    }
   }
 }
 
-@media screen and (max-width: 480px) {
-  .model-box {
-    padding: 10px;
-  }
+/* buttons */
+.cancel-btn {
+  border-radius: 10px;
+}
 
-  .buttons {
-    flex-direction: column;
-    align-items: stretch;
-  }
+.create-btn {
+  font-weight: 700;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba($sky-blue, 0.35);
+  transition: transform 0.2s, box-shadow 0.2s;
 
-  .button {
-    width: 100%;
-    text-align: center;
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba($sky-blue, 0.45);
   }
 }

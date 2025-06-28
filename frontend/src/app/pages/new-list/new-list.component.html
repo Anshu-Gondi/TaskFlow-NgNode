@@ -1,19 +1,19 @@
-<div class="centered-content">
-  <div class="model-box">
-    <h1 class="title">Create a new list</h1>
+<div class="new-list-wrapper">
+  <div class="new-list-card">
+    <h1 class="title has-text-warning">📝 Create a New List</h1>
 
     <input
       #listTitleInput
-      class="input has-background-light is-medium"
+      class="input is-medium list-input"
       type="text"
-      placeholder="Enter list name..."
+      placeholder="Enter list name…"
     />
-    <br /><br />
-    <div class="buttons is-right">
-      <button class="button is-medium" routerLink="/lists">Cancel</button>
+
+    <div class="button-row">
+      <button class="button is-light cancel-btn" routerLink="/lists">Cancel</button>
 
       <button
-        class="button is-link has-text-white is-medium"
+        class="button is-link create-btn"
         (click)="createList(listTitleInput.value)"
       >
         Create

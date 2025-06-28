@@ -1,21 +1,37 @@
-<div class="centered-content">
-  <div class="model-box">
-    <h1 class="title">Edit a task</h1>
+<div class="edit-task-wrapper">
+  <div class="edit-task-card">
+    <h1 class="title has-text-warning">✏️ Edit Task</h1>
 
-    <input #taskTitleInput class="input is-medium" type="text" placeholder="Enter task name..." />
-    <br /><br />
+    <input
+      #taskTitleInput
+      class="input is-medium task-input"
+      type="text"
+      placeholder="Enter task name…"
+    />
 
-    <input #taskPriorityInput class="input is-medium" type="number" placeholder="Priority (eg., 1)" />
-    <br /><br />
+    <label class="label mt-4 has-text-weight-semibold">Priority</label>
+    <div class="select is-medium is-fullwidth">
+      <select #taskPriorityInput>
+        <option value="low">Low</option>
+        <option value="medium">Medium</option>
+        <option value="high">High</option>
+        <option value="urgent">Urgent</option>
+      </select>
+    </div>
 
-    <input #taskDueDateInput class="input is-medium" type="date" />
-    <br /><br />
+    <label class="label mt-4 has-text-weight-semibold">Due Date</label>
+    <input #taskDueDateInput class="input is-medium task-input" type="date" />
 
-    <div class="buttons is-right">
-      <button class="button is-medium" routerLink="/lists">Cancel</button>
+    <div class="button-row">
+      <button class="button is-light cancel-btn" routerLink="/lists">Cancel</button>
+
       <button
-        class="button is-link is-medium"
-        (click)="updateTask(taskTitleInput.value, taskPriorityInput.valueAsNumber, taskDueDateInput.value)"
+        class="button is-link update-btn"
+        (click)="updateTask(
+          taskTitleInput.value,
+          taskPriorityInput.value,
+          taskDueDateInput.value
+        )"
       >
         Save
       </button>

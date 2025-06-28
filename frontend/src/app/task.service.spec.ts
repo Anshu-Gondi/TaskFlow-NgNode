@@ -12,7 +12,12 @@ describe('TaskService', () => {
 
   beforeEach(() => {
     // Create spies for dependencies
-    webRequestServiceSpy = jasmine.createSpyObj('WebRequestService', ['get', 'post', 'patch', 'delete']);
+    webRequestServiceSpy = jasmine.createSpyObj('WebRequestService', [
+      'get',
+      'post',
+      'patch',
+      'delete',
+    ]);
     authServiceSpy = jasmine.createSpyObj('AuthService', ['getAccessToken']); // Use same variables
 
     TestBed.configureTestingModule({
@@ -20,8 +25,8 @@ describe('TaskService', () => {
       providers: [
         TaskService,
         { provide: WebRequestService, useValue: webRequestServiceSpy },
-        { provide: AuthService, useValue: authServiceSpy }
-      ]
+        { provide: AuthService, useValue: authServiceSpy },
+      ],
     });
 
     service = TestBed.inject(TaskService);
@@ -38,7 +43,7 @@ describe('TaskService', () => {
       authServiceSpy.getAccessToken.and.returnValue(mockToken);
       webRequestServiceSpy.get.and.returnValue(of(mockLists));
 
-      service.getLists().subscribe(lists => {
+      service.getLists().subscribe((lists) => {
         expect(lists).toEqual(mockLists);
         expect(webRequestServiceSpy.get).toHaveBeenCalledWith('lists', {
           Authorization: `Bearer ${mockToken}`,
@@ -56,16 +61,21 @@ describe('TaskService', () => {
   describe('getTasks', () => {
     it('should fetch tasks for the given listId', () => {
       const mockToken = 'mock-token';
-      const mockTasks = [{ _id: '1', title: 'Task 1', completed: false, _listId: 'list-1' }]; // Add _id and _listId
+      const mockTasks = [
+        { _id: '1', title: 'Task 1', completed: false, _listId: 'list-1' },
+      ]; // Add _id and _listId
       const mockListId = 'list-1';
       authServiceSpy.getAccessToken.and.returnValue(mockToken);
       webRequestServiceSpy.get.and.returnValue(of(mockTasks));
 
-      service.getTasks(mockListId).subscribe(tasks => {
+      service.getTasks(mockListId).subscribe((tasks) => {
         expect(tasks).toEqual(mockTasks);
-        expect(webRequestServiceSpy.get).toHaveBeenCalledWith(`lists/${mockListId}/tasks`, {
-          Authorization: `Bearer ${mockToken}`,
-        });
+        expect(webRequestServiceSpy.get).toHaveBeenCalledWith(
+          `lists/${mockListId}/tasks`,
+          {
+            Authorization: `Bearer ${mockToken}`,
+          }
+        );
       });
     });
 
@@ -75,7 +85,7 @@ describe('TaskService', () => {
       authServiceSpy.getAccessToken.and.returnValue(mockToken);
       webRequestServiceSpy.get.and.returnValue(throwError({ status: 404 }));
 
-      service.getTasks(mockListId).subscribe(tasks => {
+      service.getTasks(mockListId).subscribe((tasks) => {
         expect(tasks).toEqual([]);
       });
     });
@@ -88,11 +98,15 @@ describe('TaskService', () => {
       authServiceSpy.getAccessToken.and.returnValue(mockToken);
       webRequestServiceSpy.post.and.returnValue(of(mockList));
 
-      service.createList('New List').subscribe(list => {
+      service.createList('New List').subscribe((list) => {
         expect(list).toEqual(mockList);
-        expect(webRequestServiceSpy.post).toHaveBeenCalledWith('lists', { title: 'New List' }, {
-          Authorization: `Bearer ${mockToken}`,
-        });
+        expect(webRequestServiceSpy.post).toHaveBeenCalledWith(
+          'lists',
+          { title: 'New List' },
+          {
+            Authorization: `Bearer ${mockToken}`,
+          }
+        );
       });
     });
   });
@@ -105,24 +119,33 @@ describe('TaskService', () => {
       authServiceSpy.getAccessToken.and.returnValue(mockToken);
       webRequestServiceSpy.patch.and.returnValue(of(mockList));
 
-      service.updateList(mockListId, 'Updated List').subscribe(list => {
+      service.updateList(mockListId, 'Updated List').subscribe((list) => {
         expect(list).toEqual(mockList);
-        expect(webRequestServiceSpy.patch).toHaveBeenCalledWith(`lists/${mockListId}`, { title: 'Updated List' }, {
-          Authorization: `Bearer ${mockToken}`,
-        });
+        expect(webRequestServiceSpy.patch).toHaveBeenCalledWith(
+          `lists/${mockListId}`,
+          { title: 'Updated List' },
+          {
+            Authorization: `Bearer ${mockToken}`,
+          }
+        );
       });
     });
   });
-    describe('createTasks', () => {
+  describe('createTasks', () => {
     it('should create a new task in the list', () => {
       const mockToken = 'mock-token';
       const listId = 'list-1';
       const taskTitle = 'New Task';
-      const mockTask = { _id: 'task-1', title: taskTitle, _listId: listId, completed: false,};
+      const mockTask = {
+        _id: 'task-1',
+        title: taskTitle,
+        _listId: listId,
+        completed: false,
+      };
       authServiceSpy.getAccessToken.and.returnValue(mockToken);
       webRequestServiceSpy.post.and.returnValue(of(mockTask));
 
-      service.createTasks(taskTitle, listId).subscribe(task => {
+      service.createTasks({ title: taskTitle }, listId).subscribe((task) => {
         expect(task).toEqual(mockTask);
         expect(webRequestServiceSpy.post).toHaveBeenCalledWith(
           `lists/${listId}/tasks`,
@@ -139,18 +162,25 @@ describe('TaskService', () => {
       const listId = 'list-1';
       const taskId = 'task-1';
       const newTitle = 'Updated Task';
-      const mockTask = { _id: taskId, title: newTitle, _listId: listId, completed: false, };
+      const mockTask = {
+        _id: taskId,
+        title: newTitle,
+        _listId: listId,
+        completed: false,
+      };
       authServiceSpy.getAccessToken.and.returnValue(mockToken);
       webRequestServiceSpy.patch.and.returnValue(of(mockTask));
 
-      service.updateTask(listId, taskId, newTitle).subscribe(task => {
-        expect(task).toEqual(mockTask);
-        expect(webRequestServiceSpy.patch).toHaveBeenCalledWith(
-          `lists/${listId}/tasks/${taskId}`,
-          { title: newTitle },
-          { Authorization: `Bearer ${mockToken}` }
-        );
-      });
+      service
+        .updateTask(listId, taskId, { title: newTitle })
+        .subscribe((task) => {
+          expect(task).toEqual(mockTask);
+          expect(webRequestServiceSpy.patch).toHaveBeenCalledWith(
+            `lists/${listId}/tasks/${taskId}`,
+            { title: newTitle },
+            { Authorization: `Bearer ${mockToken}` }
+          );
+        });
     });
   });
 
@@ -162,7 +192,7 @@ describe('TaskService', () => {
       authServiceSpy.getAccessToken.and.returnValue(mockToken);
       webRequestServiceSpy.delete.and.returnValue(of(void 0));
 
-      service.deleteTask(listId, taskId).subscribe(response => {
+      service.deleteTask(listId, taskId).subscribe((response) => {
         expect(response).toBeUndefined();
         expect(webRequestServiceSpy.delete).toHaveBeenCalledWith(
           `lists/${listId}/tasks/${taskId}`,
@@ -179,7 +209,7 @@ describe('TaskService', () => {
       authServiceSpy.getAccessToken.and.returnValue(mockToken);
       webRequestServiceSpy.delete.and.returnValue(of(void 0));
 
-      service.deleteList(listId).subscribe(response => {
+      service.deleteList(listId).subscribe((response) => {
         expect(response).toBeUndefined();
         expect(webRequestServiceSpy.delete).toHaveBeenCalledWith(
           `lists/${listId}`,
@@ -201,7 +231,7 @@ describe('TaskService', () => {
       authServiceSpy.getAccessToken.and.returnValue(mockToken);
       webRequestServiceSpy.patch.and.returnValue(of(void 0));
 
-      service.complete(task).subscribe(response => {
+      service.complete(task).subscribe((response) => {
         expect(response).toBeUndefined();
         expect(webRequestServiceSpy.patch).toHaveBeenCalledWith(
           `lists/${task._listId}/tasks/${task._id}`,
@@ -211,5 +241,4 @@ describe('TaskService', () => {
       });
     });
   });
-
 });

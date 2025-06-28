@@ -1,76 +1,73 @@
 @import '../../../styles.scss';
 
-.centered-content {
+.edit-list-wrapper {
+  min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
-  padding: 20px;
-  box-sizing: border-box;
+  padding: 24px;
+  background: linear-gradient(to right, #fefae0, #d8f3dc);
 }
 
-.model-box {
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-  padding: 20px;
-  max-width: 400px;
+.edit-list-card {
+  background: #ffffff;
+  backdrop-filter: blur(4px);
+  border-radius: 16px;
+  padding: 36px 28px;
+  max-width: 460px;
   width: 100%;
-  box-sizing: border-box;
-}
-
-.title {
-  font-size: 2rem;
-  text-align: left;
-  margin-bottom: 20px;
-}
-
-.input {
-  width: 100%;
-  padding: 10px;
-  font-size: 1rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-}
-
-.buttons {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-}
-
-.button {
-  padding: 10px 20px;
-  font-size: 1rem;
-}
-
-@media screen and (max-width: 768px) {
-  .model-box {
-    padding: 15px;
-  }
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
 
   .title {
-    font-size: 1.2rem;
+    font-size: 1.75rem;
+    font-weight: 800;
+    text-align: left;
+    color: $dark-blue;
+    margin-bottom: 24px;
   }
 
-  .button {
-    font-size: 0.9rem;
-    padding: 8px 16px;
-  }
-}
-
-@media screen and (max-width: 480px) {
-  .model-box {
-    padding: 10px;
-  }
-
-  .buttons {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .button {
+  .input {
     width: 100%;
-    text-align: center;
+    padding: 14px 16px;
+    font-size: 1.1rem;
+    border: 2px solid $soft-gray;
+    border-radius: 10px;
+
+    &:focus {
+      border-color: $sky-blue;
+      box-shadow: 0 0 0 4px rgba($sky-blue, 0.2);
+    }
+  }
+
+  .button-group {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 28px;
+
+    @media screen and (max-width: 480px) {
+      flex-direction: column;
+      align-items: stretch;
+
+      .button {
+        width: 100%;
+        text-align: center;
+      }
+    }
+  }
+
+  .cancel-btn {
+    border-radius: 10px;
+  }
+
+  .save-btn {
+    border-radius: 10px;
+    font-weight: bold;
+    box-shadow: 0 4px 12px rgba($sky-blue, 0.3);
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba($sky-blue, 0.4);
+    }
   }
 }

@@ -24,15 +24,22 @@ export class NewTaskComponent implements OnInit {
     });
   }
 
-  createTask(title: string, priority: number, dueDate: string): void {
+  createTask(title: string, priorityLabel: string, dueDate: string): void {
     if (!title.trim()) {
       alert('Task title cannot be empty.');
       return;
     }
 
+    const priorityMap: Record<string, number> = {
+      low: 0,
+      medium: 1,
+      high: 2,
+      urgent: 3,
+    };
+
     const taskData = {
       title,
-      priority: isNaN(priority) ? 0 : priority,
+      priority: priorityMap[priorityLabel] ?? 0, // default to 0 if invalid
       dueDate: dueDate || null,
     };
 

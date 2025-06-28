@@ -1,44 +1,49 @@
 @import '../../../styles.scss';
 
-.login-box,
-.signup-box {
+.centered-content {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(to right, #e0f7fa, #e8f5e9);
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.login-box {
   padding: 40px;
-  max-width: 400px;
+  max-width: 420px;
   width: 100%;
   background-color: white;
-  border-radius: 14px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-  transition: box-shadow 0.3s ease;
+  border-radius: 16px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.12);
+  transition: all 0.3s ease;
 
   .title {
     font-family: 'Nunito', sans-serif;
-    font-size: 1.8rem;
+    font-size: 2rem;
     font-weight: 700;
-    color: black;
     text-align: center;
-    margin-bottom: 30px;
+    margin-bottom: 24px;
+    color: #222;
   }
 
   .field {
-    margin-bottom: 18px;
+    margin-bottom: 20px;
   }
 
   .input {
     padding: 12px 14px;
     border-radius: 8px;
     font-size: 1rem;
-    background-color: #f1f5ff; // slight contrast
-    border: 1px solid #d0d7e2;
+    background-color: #f4f8ff;
+    border: 1px solid #ccd9e3;
 
     &:focus {
       outline: none;
-      border-color: #00BFFF;
-      box-shadow: 0 0 0 2px rgba(0, 191, 255, 0.2);
+      border-color: #00bcd4;
+      box-shadow: 0 0 0 2px rgba(0, 188, 212, 0.2);
     }
-  }
-
-  .icon.is-left {
-    color: #888;
   }
 
   .button.is-primary {
@@ -47,18 +52,16 @@
     font-size: 1rem;
     border: none;
     border-radius: 8px;
-    background-color: #00BFFF;
+    background-color: #00bcd4;
     transition: background-color 0.3s ease;
 
     &:hover {
-      background-color: darken(#00BFFF, 8%);
+      background-color: darken(#00bcd4, 8%);
     }
   }
 
   .button.is-link.is-light {
-    width: 100%;
     font-size: 0.95rem;
-    padding: 10px;
     background-color: #f0f4f8;
     color: #005B96;
     font-weight: 600;
@@ -73,7 +76,7 @@
   #googleSignInDiv {
     display: flex;
     justify-content: center;
-    margin-top: 18px;
+    margin-top: 16px;
 
     .g_id_signin {
       width: 100%;
@@ -83,12 +86,11 @@
 }
 
 @media screen and (max-width: 768px) {
-  .login-box,
-  .signup-box {
-    padding: 24px;
+  .login-box {
+    padding: 28px;
 
     .title {
-      font-size: 1.5rem;
+      font-size: 1.6rem;
     }
 
     .input,

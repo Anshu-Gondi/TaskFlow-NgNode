@@ -34,7 +34,7 @@ export class EditTaskComponent implements OnInit {
     }
   }
 
-  updateTask(title: string, priority: number, dueDate: string): void {
+  updateTask(title: string, priorityLabel: string, dueDate: string): void {
     if (!title.trim()) {
       alert('Task title cannot be empty.');
       return;
@@ -42,7 +42,7 @@ export class EditTaskComponent implements OnInit {
 
     const updateData = {
       title,
-      priority: isNaN(priority) ? 0 : priority,
+      priorityLabel: priorityLabel || 'low', // default fallback
       dueDate: dueDate || null,
     };
 

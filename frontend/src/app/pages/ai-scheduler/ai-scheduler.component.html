@@ -1,20 +1,22 @@
-<div class="centered-content">
-  <div class="model-box">
-    <h1 class="title">AI Scheduler</h1>
+<div class="ai-scheduler-container">
+  <div class="ai-box">
+    <h1 class="title has-text-warning">🔮 AI Scheduler</h1>
 
-    <button class="button is-link is-medium" (click)="generateSchedule()">
+    <button class="button is-link is-medium schedule-button" (click)="generateSchedule()">
       Generate Optimized Schedule
     </button>
 
     <div class="schedule-result" *ngIf="schedule && schedule.length > 0">
-      <h2 class="subtitle">Recommended Task Order</h2>
-      <ul>
-        <li *ngFor="let task of schedule">
-          <strong>{{ task.title }}</strong> -
-          Priority: {{ task.priority }},
-          Due: {{ task.dueDate | date: 'MMM d, y' }}
-        </li>
-      </ul>
+      <h2 class="subtitle has-text-dark mt-4">📋 Recommended Task Order</h2>
+      <div class="schedule-card" *ngFor="let task of schedule">
+        <p class="task-title">{{ task.title }}</p>
+        <p class="task-meta">
+          <span class="tag is-rounded" [ngClass]="priorityClass(task.priority)">
+            {{ priorityLabel(task.priority) }}
+          </span>
+          <span>📅 {{ task.dueDate | date: 'MMM d, y' }}</span>
+        </p>
+      </div>
     </div>
   </div>
 </div>

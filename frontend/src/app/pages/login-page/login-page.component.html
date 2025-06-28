@@ -1,46 +1,68 @@
 <div class="centered-content">
   <div class="login-box box">
-    <h1 class="title has-text-black is-link mb-4">Login</h1>
+    <h1 class="title has-text-black">🔐 Login</h1>
 
     <!-- Error Message -->
-    <p *ngIf="errorMessage" class="has-text-danger">{{ errorMessage }}</p>
+    <p *ngIf="errorMessage" class="has-text-danger has-text-weight-semibold">
+      {{ errorMessage }}
+    </p>
 
+    <!-- Email Input -->
     <div class="field">
       <p class="control has-icons-left">
-        <input #emailInput class="input has-background-light is-medium" type="email" placeholder="Email" />
+        <input
+          #emailInput
+          class="input is-medium"
+          type="email"
+          placeholder="Email"
+        />
         <span class="icon is-small is-left">
           <i class="fas fa-envelope"></i>
         </span>
       </p>
     </div>
 
+    <!-- Password Input -->
     <div class="field">
       <p class="control has-icons-left">
-        <input #pwInput class="input has-background-light is-medium" type="password" placeholder="Password" />
+        <input
+          #pwInput
+          class="input is-medium"
+          type="password"
+          placeholder="Password"
+        />
         <span class="icon is-small is-left">
           <i class="fas fa-lock"></i>
         </span>
       </p>
     </div>
 
-    <div class="field has-text-right">
-      <button class="button is-primary is-medium has-text-white"
-        (click)="onLoginButtonClicked(emailInput.value, pwInput.value)">
+    <!-- Login Button -->
+    <div class="field mt-4">
+      <button
+        class="button is-primary is-medium has-text-white"
+        (click)="onLoginButtonClicked(emailInput.value, pwInput.value)"
+      >
         Login
       </button>
     </div>
 
+    <!-- Sign Up Redirect -->
     <div class="field">
-      <button class="button is-link is-light is-medium is-fullwidth mt-2" (click)="navigateToSignup()">
+      <button
+        class="button is-link is-light is-medium is-fullwidth mt-1"
+        (click)="navigateToSignup()"
+      >
         Don't have an account? Sign up
       </button>
     </div>
 
-    <hr class="my-3" style="border-color: #ccc;" />
+    <hr class="my-4" style="border-color: #ccc;" />
 
-    <!-- Google Sign-In Button -->
-    <div class="field mt-4">
-      <div id="googleSignInDiv" class="mt-4"></div>
+    <!-- Google Sign-In -->
+    <div class="field has-text-centered">
+      <p class="mb-2">Or login with Google</p>
+      <div id="googleSignInDiv"></div>
     </div>
   </div>
 </div>

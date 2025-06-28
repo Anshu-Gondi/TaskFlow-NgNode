@@ -2,8 +2,7 @@
 
 .task-manager-container {
   display: flex;
-  flex-direction: row; // Added to allow layout adjustments
-  flex-wrap: wrap; // Ensure wrapping on smaller screens
+  flex-wrap: nowrap;
   width: 100%;
   height: 100%;
   max-width: 100%;
@@ -13,15 +12,14 @@
 .sidebar {
   display: flex;
   flex-direction: column;
-  flex: 0 0 100%;
-  width: 250px;
+  width: 260px;
   background: white;
-  padding: 42px;
+  padding: 32px 20px;
   border-radius: 0;
+  overflow-y: auto;
 
-  @media screen and (min-width: 768px) {
-    flex: 0 0 250px;
-    border-radius: 8px 0 0 8px;
+  @media screen and (min-width: 1024px) {
+    padding: 50px 25px;
   }
 
   .list-menu {
@@ -32,129 +30,134 @@
 
     .list-menu-item {
       display: flex;
+      justify-content: center;
       align-items: center;
-      padding: 10px 15px;
-      border-radius: 5px;
-      color: #D3D3D3;
-      margin-bottom: 5px;
+      padding: 12px;
+      margin-bottom: 8px;
+      border-radius: 10px;
+      color: $gray-text;
+      font-weight: bold;
+      font-size: 1.1rem;
+      text-align: center;
 
       &:hover {
-        background: $soft-gray; // Soft gray hover
+        background: $soft-gray;
       }
 
       &.is-active {
-        background-color: $light-blue; // Highlight active item
+        background-color: $light-blue;
         color: $dark-blue;
       }
     }
+  }
+
+  button,
+  a.button {
+    margin-top: 12px;
+    border-radius: 12px;
+    font-weight: bold;
   }
 }
 
 .tasks-list-container {
   position: relative;
-  flex: 1 1 auto;
+  flex: 1;
   padding: 42px 20px;
   display: flex;
   flex-direction: column;
-  flex-grow: 1;
+  background: #f9f9f9;
   border-radius: 0;
 
   @media screen and (min-width: 768px) {
     border-radius: 0 8px 8px 0;
+    padding: 60px;
   }
 
   .top-bar {
     display: flex;
-    margin-bottom: 10px;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
 
     .title {
-      flex-grow: 1;
       margin: 0;
+      font-weight: 800;
+      color: $dark-blue;
+      letter-spacing: 1px;
+    }
+  }
+
+  .dropdown {
+    .dropdown-menu {
+      z-index: 10;
+    }
+
+    .dropdown-item {
+      font-size: 0.9rem;
+    }
+
+    .button {
+      padding: 6px 10px;
+      height: auto;
+      border-radius: 10px;
     }
   }
 }
 
 .task {
   display: flex;
+  flex-direction: row;
   background: white;
-  font-size: 1rem;
   padding: 15px 20px;
-  border-radius: 5px;
+  border-radius: 10px;
   margin-top: 10px;
+  font-size: 1rem;
   justify-content: space-between;
   align-items: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.3s ease, transform 0.2s ease;
 
-  @media screen and (min-width: 768px) {
-    font-size: 1.2rem;
-    padding: 15px;
+  &:hover {
+    box-shadow: 0 6px 20px rgba(0, 191, 255, 0.3);
   }
 
-  &:not(.complete) {
+  &:not(.completed):hover {
     cursor: pointer;
-    transition: box-shadow 0.3s ease, transform 0.2s ease;
 
-    &:hover {
-      box-shadow: 5px 5px 10px 5px $light-blue; // New light-blue hover shadow
-
-      .task-buttons {
-        opacity: 1;
-        transform: scale(1);
-      }
+    .task-buttons {
+      opacity: 1;
+      transform: scale(1);
     }
+  }
 
-    &:active {
-      transform: scale(0.95);
-    }
+  &:active {
+    transform: scale(0.97);
   }
 
   &.completed .task-text {
     text-decoration: line-through;
-    opacity: 0.8;
+    opacity: 0.75;
   }
 
   .task-text {
-    display: flex;
     flex-grow: 1;
+    display: flex;
+    flex-direction: column;
   }
 
   .task-buttons {
     transition: opacity 0.2s, transform 0.2s;
     opacity: 0;
     transform: scale(0.5);
-  }
-}
-
-.circle-add-button {
-  position: fixed; // Fixed to avoid overlap on larger screens
-  bottom: 20px;
-  right: 20px;
-  height: 50px;
-  width: 50px;
-  border-radius: 50%;
-  background-color: $sky-blue; // New blue button
-  color: white;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-
-  @media screen and (min-width: 768px) {
-    height: 50px;
-    width: 50px;
-  }
-
-  @media screen and (min-width: 1200px) {
-    height: 60px;
-    width: 60px;
-  }
-
-  &:hover {
-    background-color: $dark-blue; // Darker blue on hover
+    display: flex;
+    gap: 10px;
   }
 }
 
 .task-info {
   display: flex;
   flex-direction: column;
+  gap: 4px;
 }
 
 .task-title {
@@ -164,4 +167,138 @@
 .task-meta {
   font-size: 0.9rem;
   color: #888;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.circle-add-button {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  height: 50px;
+  width: 50px;
+  border-radius: 50%;
+  background-color: $sky-blue;
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 0 10px rgba(0, 191, 255, 0.6);
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 16px rgba(0, 191, 255, 0.6);
+  }
+
+  @media screen and (min-width: 768px) {
+    height: 60px;
+    width: 60px;
+  }
+}
+
+// Filters (mobile friendly)
+.field.is-grouped {
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 10px;
+  margin-bottom: 1rem;
+
+  .control {
+    flex: 1 1 45%;
+  }
+}
+
+// Fallback States
+.no-tasks-container,
+.no-list-container,
+.fallback-container {
+  text-align: center;
+  margin: 20px 0;
+  padding: 30px 15px;
+  border: 2px dashed $soft-gray;
+  border-radius: 8px;
+
+  .subtitle {
+    color: $gray-text;
+  }
+}
+
+// Mobile Optimizations
+@media screen and (max-width: 768px) {
+  .task-manager-container {
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  /* Sidebar full‑width on mobile */
+  .sidebar {
+    width: 100%;
+    padding: 20px 16px;
+    background: #fff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+    z-index: 2;              /* keep above tasks when scrolling */
+
+    .list-menu {
+      margin-bottom: 16px;
+    }
+
+    .list-menu-item {
+      width: 100%;
+      text-align: center;
+      font-size: 1.1rem;
+    }
+
+    button,
+    a.button {
+      width: 100%;
+      margin-top: 8px;
+    }
+  }
+
+  /* Tasks container now scrolls independently */
+  .tasks-list-container {
+    flex: 1;
+    padding: 20px 16px;
+    background: #f9f9f9;
+    overflow-y: auto;        /* ← key line so tasks don’t disappear */
+    z-index: 1;
+  }
+
+  /* Cards stack neatly */
+  .task {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+
+    .task-buttons {
+      align-self: flex-end;
+      margin-top: 10px;
+    }
+
+    .task-text {
+      width: 100%;
+    }
+  }
+
+  /* Top‑bar wraps */
+  .top-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  /* Floating Action Button slightly smaller */
+  .circle-add-button {
+    bottom: 15px;
+    right: 15px;
+    height: 45px;
+    width: 45px;
+  }
+}
+
+/* tiny tweak: let tasks scroll on desktop too if needed */
+.tasks-list-container {
+  overflow-y: auto;
 }

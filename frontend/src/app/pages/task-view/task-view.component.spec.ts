@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { Component, Input } from '@angular/core';
 import { TaskViewComponent } from './task-view.component';
 import { TaskService } from '../../task.service';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -28,7 +29,11 @@ describe('TaskViewComponent', () => {
     mockRouter = jasmine.createSpyObj('Router', ['navigate']);
 
     await TestBed.configureTestingModule({
-      imports: [TaskViewComponent, HttpClientTestingModule, RouterTestingModule],
+      imports: [
+        TaskViewComponent,
+        HttpClientTestingModule,
+        RouterTestingModule.withRoutes([]),
+      ],
       providers: [
         { provide: TaskService, useValue: mockTaskService },
         { provide: ActivatedRoute, useValue: { params: of({ listId: null }) } },
@@ -71,7 +76,16 @@ describe('TaskViewComponent', () => {
 
   it('should delete a task when givem() is called', () => {
     const taskId = '456';
-    const task: Task = { _id: taskId, _listId: '123', title: 'Test Task', completed: false };
+    const listId = '123';
+
+    const task: Task = {
+      _id: taskId,
+      _listId: listId,
+      title: 'Test Task',
+      completed: false,
+    };
+
+    component.listId = listId; // ✅ Ensure listId is defined
     component.tasks = [task];
 
     spyOn(window, 'confirm').and.returnValue(true);
@@ -79,20 +93,32 @@ describe('TaskViewComponent', () => {
 
     component.givem(taskId);
 
-    expect(mockTaskService.deleteTask).toHaveBeenCalledWith(component.listId, taskId);
+    expect(mockTaskService.deleteTask).toHaveBeenCalledWith(listId, taskId);
     expect(component.tasks.length).toBe(0);
   });
 
   it('should navigate to task edit page when onTaskEditClick() is called', () => {
-    const task: Task = { _id: '789', _listId: '123', title: 'Test Task', completed: false };
+    const task: Task = {
+      _id: '789',
+      _listId: '123',
+      title: 'Test Task',
+      completed: false,
+    };
 
     component.onTaskEditClick(task);
 
-    expect(mockRouter.navigate).toHaveBeenCalledWith(['/lists/123/tasks/789/edit']);
+    expect(mockRouter.navigate).toHaveBeenCalledWith([
+      '/lists/123/tasks/789/edit',
+    ]);
   });
 
   it('should toggle task completion status when onTaskClick is called', () => {
-    const task: Task = { _id: '123', _listId: '321', title: 'Test Task', completed: false };
+    const task: Task = {
+      _id: '123',
+      _listId: '321',
+      title: 'Test Task',
+      completed: false,
+    };
 
     component.onTaskClick(task);
 
@@ -110,7 +136,9 @@ describe('TaskViewComponent', () => {
   it('should alert when trying to delete task with no taskId', () => {
     spyOn(window, 'alert');
     component.givem('');
-    expect(window.alert).toHaveBeenCalledWith('Task ID is required to delete the task.');
+    expect(window.alert).toHaveBeenCalledWith(
+      'Task ID is required to delete the task.'
+    );
   });
 
   it('should call handleError and alert on list fetch failure', () => {
@@ -126,6 +154,70 @@ describe('TaskViewComponent', () => {
     expect(console.error).toHaveBeenCalledWith('Error fetching lists', error);
     expect(window.alert).toHaveBeenCalledWith('Error fetching lists');
   });
+
+  it('should not navigate if task._id or task._listId is missing', () => {
+    const invalidTask: Task = {
+      _id: '',
+      _listId: '',
+      title: 'Broken Task',
+      completed: false,
+    };
+    spyOn(console, 'error');
+
+    component.onTaskEditClick(invalidTask);
+
+    expect(mockRouter.navigate).not.toHaveBeenCalled();
+    expect(console.error).toHaveBeenCalledWith('Task ID or List ID is missing');
+  });
+
+  it('should call handleError and alert on task fetch failure', () => {
+    const error = new Error('Failed to fetch tasks');
+    mockTaskService.getTasks = jasmine.createSpy().and.returnValue({
+      subscribe: (success: any, errorCb: any) => errorCb(error),
+    });
+    spyOn(window, 'alert');
+    spyOn(console, 'error');
+
+    component.fetchTasks('abc123');
+
+    expect(console.error).toHaveBeenCalledWith('Error fetching tasks', error);
+    expect(window.alert).toHaveBeenCalledWith('Error fetching tasks');
+  });
+
+  it('should clear tasks if listId is not provided in route params', () => {
+    component.tasks = [
+      { _id: '1', _listId: 'abc', title: 'Temp', completed: false },
+    ];
+    component.ngOnInit(); // manually trigger, although already run in fixture.detectChanges()
+    expect(component.tasks).toEqual([]);
+  });
+
+  it('should toggle task completion from true to false', () => {
+    const task: Task = {
+      _id: '1',
+      _listId: '2',
+      title: 'Done',
+      completed: true,
+    };
+    component.onTaskClick(task);
+    expect(task.completed).toBeFalse();
+  });
+
+  it('should not call deleteTask if taskId is missing', () => {
+    spyOn(window, 'alert');
+    component.givem('');
+    expect(mockTaskService.deleteTask).not.toHaveBeenCalled();
+  });
+
+  it('should not call deleteTask if listId is missing', () => {
+    spyOn(window, 'alert');
+    component.listId = null;
+    component.givem('456');
+    expect(mockTaskService.deleteTask).not.toHaveBeenCalled();
+    expect(window.alert).toHaveBeenCalledWith(
+      'Task ID is required to delete the task.'
+    );
+  });
 });
 
 // ✅ Separate describe to test listId routing param logic
@@ -140,7 +232,7 @@ describe('TaskViewComponent (with listId)', () => {
       'getTasks',
       'complete',
       'deleteList',
-      'deleteTask'
+      'deleteTask',
     ]);
 
     // Must return Observables *before* component instantiation
@@ -151,22 +243,22 @@ describe('TaskViewComponent (with listId)', () => {
       imports: [
         TaskViewComponent,
         HttpClientTestingModule,
-        RouterTestingModule
+        RouterTestingModule,
       ],
       providers: [
         { provide: TaskService, useValue: mockTaskService },
         {
           // Simulate route with listId
           provide: ActivatedRoute,
-          useValue: { params: of({ listId: 'abc123' }) }
-        }
+          useValue: { params: of({ listId: 'abc123' }) },
+        },
         // No manual Router provider needed when using RouterTestingModule
-      ]
+      ],
     }).compileComponents();
 
-    fixture  = TestBed.createComponent(TaskViewComponent);
+    fixture = TestBed.createComponent(TaskViewComponent);
     component = fixture.componentInstance;
-    fixture.detectChanges();  // runs ngOnInit()
+    fixture.detectChanges(); // runs ngOnInit()
   });
 
   it('should fetch tasks when listId is present in route params', () => {

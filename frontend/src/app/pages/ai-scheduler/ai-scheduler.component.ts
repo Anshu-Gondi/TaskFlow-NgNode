@@ -34,11 +34,13 @@ export class AiSchedulerComponent implements OnInit {
     this.taskService.getTasks(this.listId).subscribe({
       next: (tasks: Task[]) => {
         // Filter out tasks with no dueDate (optional)
-        const tasksWithDates = tasks.filter(t => t.dueDate);
+        const tasksWithDates = tasks.filter((t) => t.dueDate);
 
         // Sort by dueDate ascending (soonest first)
         this.schedule = tasksWithDates.sort((a, b) => {
-          return new Date(a.dueDate!).getTime() - new Date(b.dueDate!).getTime();
+          return (
+            new Date(a.dueDate!).getTime() - new Date(b.dueDate!).getTime()
+          );
         });
       },
       error: (error) => {
@@ -46,5 +48,36 @@ export class AiSchedulerComponent implements OnInit {
         alert('Failed to generate schedule. Please try again.');
       },
     });
+  }
+
+  // PRIORITY
+  priorityLabel(priority: number | undefined): string {
+    switch (priority) {
+      case 0:
+        return 'Low';
+      case 1:
+        return 'Medium';
+      case 2:
+        return 'High';
+      case 3:
+        return 'Urgent';
+      default:
+        return 'Unknown';
+    }
+  }
+
+  priorityClass(priority: number | undefined): string {
+    switch (priority) {
+      case 0:
+        return 'is-success is-light';
+      case 1:
+        return 'is-info is-light';
+      case 2:
+        return 'is-warning is-light';
+      case 3:
+        return 'is-danger is-light';
+      default:
+        return 'is-light';
+    }
   }
 }

@@ -1,4 +1,9 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import {
+  ComponentFixture,
+  TestBed,
+  fakeAsync,
+  tick,
+} from '@angular/core/testing';
 import { EditTaskComponent } from './edit-task.component';
 import { TaskService } from '../../task.service';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -48,7 +53,7 @@ describe('EditTaskComponent', () => {
 
   it('should show an alert if task title is empty', () => {
     spyOn(window, 'alert');
-    component.updateTask('');
+    component.updateTask('','high', '');
     expect(window.alert).toHaveBeenCalledWith('Task title cannot be empty.');
     expect(mockTaskService.updateTask).not.toHaveBeenCalled(); // ✅ This should be added
   });
@@ -56,20 +61,19 @@ describe('EditTaskComponent', () => {
   it('should update the task and navigate back to the list', fakeAsync(() => {
     const mockUpdatedTask: Task = {
       _id: '456',
+      _listId: '123',
       title: 'Updated Task',
-      _listId: '123', // Include _listId
-      completed: false, // Include completed
+      completed: false,
     };
     mockTaskService.updateTask.and.returnValue(of(mockUpdatedTask));
 
-    component.updateTask('Updated Task');
-    tick(); // Ensure async code completes
+component.updateTask('Updated Task', 'high', '2025-07-01');    tick();
 
-    expect(mockTaskService.updateTask).toHaveBeenCalledWith(
-      '123',
-      '456',
-      'Updated Task'
-    );
+    expect(mockTaskService.updateTask).toHaveBeenCalledWith('123', '456', {
+      title: 'Updated Task',
+      priority: 1,
+      dueDate: '2025-07-01',
+    });
     expect(mockRouter.navigate).toHaveBeenCalledWith(['/lists', '123']);
   }));
 
@@ -79,7 +83,7 @@ describe('EditTaskComponent', () => {
       throwError(() => new Error('Update failed'))
     );
 
-    component.updateTask('New Title');
+    component.updateTask('New Title', 'high', '2025-08-01');
     tick(); // Ensure async code completes
 
     expect(window.alert).toHaveBeenCalledWith(

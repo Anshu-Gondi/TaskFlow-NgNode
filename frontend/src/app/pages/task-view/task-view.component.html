@@ -1,10 +1,8 @@
 <div class="centered-content">
-  <div
-    class="task-manager-container columns is-variable is-0-mobile is-2-tablet is-4-desktop"
-  >
+  <div class="task-manager-container columns is-gapless is-multiline">
     <!-- Sidebar -->
-    <div class="column is-one-quarter sidebar">
-      <h1 class="title has-text-warning has-background-white">Lists</h1>
+    <div class="column is-full-mobile is-one-quarter-desktop sidebar">
+      <h1 class="title has-text-warning has-background-white">LISTS</h1>
 
       <div class="list-menu">
         <a
@@ -19,12 +17,12 @@
       </div>
 
       <button
-        class="button is-primary has-text-white"
+        class="button is-primary has-text-white is-fullwidth"
         [routerLink]="['/new-list']"
       >
         + New List
       </button>
-      <!-- 🔮 AI Scheduler Button (visible only when list is selected) -->
+
       <ng-container *ngIf="listId">
         <a
           class="button is-warning is-fullwidth"
@@ -36,118 +34,108 @@
       </ng-container>
     </div>
 
-    <!-- Tasks List -->
-    <div
-      class="tasks-list-container has-background-light"
-      *ngIf="listId; else noListSelected"
-    >
-      <div class="top-bar">
-        <h1 class="title has-text-warning">Tasks</h1>
-        <!-- Dropdown menu only appears when a list is selected -->
-        <div class="dropdown is-hoverable is-right" *ngIf="listId">
-          <div class="dropdown-trigger">
-            <button
-              class="button"
-              aria-haspopup="true"
-              aria-controls="dropdown-menu4"
-            >
-              <span class="icon is-small">
-                <i class="fas fa-cog" aria-hidden="true"></i>
+    <!-- Main Content -->
+    <div class="column is-full-mobile is-three-quarters-desktop tasks-list-container">
+      <!-- Top Bar: Filter & Sort -->
+      <div class="columns is-mobile is-multiline is-vcentered mb-4">
+        <div class="column is-half-mobile is-one-third-tablet">
+          <div class="select is-small is-fullwidth">
+            <select [(ngModel)]="filterPriority">
+              <option value="">All Priorities</option>
+              <option value="0">Low</option>
+              <option value="1">Medium</option>
+              <option value="2">High</option>
+              <option value="3">Urgent</option>
+            </select>
+          </div>
+        </div>
+        <div class="column is-half-mobile is-one-third-tablet">
+          <button class="button is-small is-fullwidth" (click)="sortByDueDate()">
+            Sort by Due Date {{ sortAsc ? '↑' : '↓' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Tasks Area -->
+    <div class="top-bar">
+      <h1 class="title has-text-warning">TASKS</h1>
+      <div class="dropdown is-hoverable is-right" *ngIf="listId">
+        <div class="dropdown-trigger">
+          <button class="button" aria-haspopup="true" aria-controls="dropdown-menu4">
+            <span class="icon is-small">
+              <i class="fas fa-cog" aria-hidden="true"></i>
+            </span>
+          </button>
+        </div>
+        <div class="dropdown-menu" id="dropdown-menu4" role="menu">
+          <div class="dropdown-content">
+            <a class="dropdown-item" [routerLink]="['/edit-list', listId]">Edit</a>
+            <a (click)="onDeleteListClick()" class="dropdown-item has-text-danger">
+              Delete
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+      <!-- Task Cards -->
+      <div
+        class="task"
+        *ngFor="let task of filteredTasks"
+        (click)="onTaskClick(task)"
+        [ngClass]="{ completed: task.completed }"
+      >
+        <div class="task-text">
+          <div class="task-info">
+            <p class="task-title has-text-weight-bold">{{ task.title }}</p>
+            <p class="task-meta">
+              <span
+                *ngIf="task.priority !== undefined"
+                class="tag is-rounded"
+                [ngClass]="priorityClass(task.priority)"
+              >
+                {{ priorityLabel(task.priority) }}
               </span>
+              <span *ngIf="task.dueDate">📅 {{ task.dueDate | date : 'MMM d, y' }}</span>
+              <span *ngIf="task.completed" class="tag is-success is-light">✅ Done</span>
+              <span
+                *ngIf="isOverdue(task.dueDate) && !task.completed"
+                class="tag is-danger is-light"
+              >
+                ⏰ Overdue
+              </span>
+            </p>
+          </div>
+          <div class="task-buttons">
+            <button class="button" (click)="onTaskEditClick(task)">
+              <span class="icon"><i class="fas fa-edit"></i></span>
+            </button>
+            <button class="button is-danger" (click)="givem(task._id)">
+              <span class="icon"><i class="fas fa-trash"></i></span>
             </button>
           </div>
-          <div class="dropdown-menu" id="dropdown-menu4" role="menu">
-            <div class="dropdown-content">
-              <a class="dropdown-item" [routerLink]="['/edit-list', listId]">
-                Edit
-              </a>
-              <a
-                (click)="onDeleteListClick()"
-                class="dropdown-item has-text-danger"
-              >
-                Delete
-              </a>
-            </div>
-          </div>
         </div>
       </div>
 
-      <!-- Tasks or No Tasks State -->
-      <div *ngIf="tasks && tasks.length > 0; else noTasks">
-        <!-- Task Elements -->
-        <div
-          class="task"
-          *ngFor="let task of tasks"
-          (click)="onTaskClick(task)"
-          [ngClass]="{ completed: task.completed }"
-        >
-          <div
-            class="task-text"
-            style="
-              display: flex;
-              align-items: center;
-              justify-content: space-between;
-            "
-          >
-            <div class="task-info">
-              <p class="task-title has-text-weight-bold">{{ task.title }}</p>
-              <p class="task-meta has-text-grey">
-                <span *ngIf="task.priority">Priority: {{ task.priority }}</span>
-                <span *ngIf="task.dueDate">
-                  | Due: {{ task.dueDate | date : "MMM d, y" }}</span
-                >
-              </p>
-            </div>
-
-            <div class="task-buttons">
-              <button class="button" (click)="onTaskEditClick(task)">
-                <div class="icon">
-                  <i class="fas fa-edit"></i>
-                </div>
-              </button>
-              <button class="button is-danger" (click)="givem(task._id)">
-                <div class="icon">
-                  <i class="fas fa-trash"></i>
-                </div>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Add Task Button -->
-      <div
-        class="add-task-container"
-        style="text-align: center; margin-top: 20px"
-      >
+      <!-- Add Task -->
+      <div class="add-task-container has-text-centered mt-5">
         <button
           class="button circle-add-button has-text-white is-link"
           [routerLink]="['/lists', listId, 'new-task']"
         >
-          <img
-            src="/plus-icon.svg"
-            alt="Add Icon"
-            style="width: 20px; height: 20px"
-          />
+          <img src="/plus-icon.svg" alt="Add Icon" style="width: 20px; height: 20px" />
         </button>
       </div>
+
+      <!-- Fallback -->
+      <ng-template #fallbackState>
+        <div class="fallback-container">
+          <h2 class="subtitle has-text-grey has-text-centered">
+            {{ listId ? 'No tasks available' : 'No list selected' }}
+          </h2>
+        </div>
+      </ng-template>
     </div>
-
-    <!-- No Tasks State -->
-    <ng-template #noTasks>
-      <div
-        class="no-tasks-container"
-        style="text-align: center; margin: 20px 0"
-      >
-        <p class="subtitle has-text-grey">No tasks available</p>
-      </div>
-    </ng-template>
-
-    <!-- No List Selected State -->
-    <ng-template #noListSelected>
-      <div class="tasks-list-container has-background-light">
-        <h2 class="title has-text-grey has-text-centered">No list selected</h2>
-      </div>
-    </ng-template>
   </div>
 </div>
