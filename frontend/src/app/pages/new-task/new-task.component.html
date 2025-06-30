@@ -23,15 +23,19 @@
     <input #taskDueDateInput class="input is-medium task-input" type="date" />
 
     <div class="button-row">
-      <button class="button is-light cancel-btn" (click)="cancel()">Cancel</button>
+      <button class="button is-light cancel-btn" (click)="cancel()">
+        Cancel
+      </button>
 
       <button
         class="button is-link create-btn"
-        (click)="createTask(
-          taskTitleInput.value,
-          taskPriorityInput.value,
-          taskDueDateInput.value
-        )"
+        (click)="
+          createTask(
+            taskTitleInput.value,
+            taskPriorityInput.value,
+            taskDueDateInput.value
+          )
+        "
       >
         Create
       </button>

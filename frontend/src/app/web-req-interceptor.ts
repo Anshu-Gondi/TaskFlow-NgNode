@@ -41,7 +41,7 @@ export class WebRequestInterceptor implements HttpInterceptor {
 
   private addToken(req: HttpRequest<any>, token: string): HttpRequest<any> {
     return req.clone({
-      setHeaders: { 'x-access-token': token },
+      setHeaders: { 'x-access-token': token, Authorization: `Bearer ${token}` },
     });
   }
 

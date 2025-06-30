@@ -145,7 +145,9 @@ export class AuthService {
   ): Observable<any> {
     const accessToken = this.getAccessToken(); // Check if access token is available
     if (!accessToken) {
-      return throwError(() => new Error('Access token is missing. Please log in again.'));
+      return throwError(
+        () => new Error('Access token is missing. Please log in again.')
+      );
     }
 
     return this.refreshAccessToken().pipe(
@@ -169,5 +171,9 @@ export class AuthService {
         }
       })
     );
+  }
+
+  get currentUserId(): string | null {
+    return localStorage.getItem('_id') ?? null;
   }
 }

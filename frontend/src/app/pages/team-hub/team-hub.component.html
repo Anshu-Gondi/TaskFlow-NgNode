@@ -1,0 +1,85 @@
+<div class="centered-content">
+  <div class="box w-96">
+    <h1 class="title is-4">Team Hub</h1>
+
+    <!-- Create Team -->
+    <form #createForm="ngForm" (ngSubmit)="createTeam()">
+      <div class="field">
+        <input
+          class="input"
+          name="teamName"
+          [(ngModel)]="newTeamName"
+          placeholder="New team name"
+        />
+      </div>
+      <button class="button is-link is-fullwidth">Create Team</button>
+    </form>
+
+    <hr />
+
+    <!-- Join Team -->
+    <form #joinForm="ngForm" (ngSubmit)="joinTeam()">
+      <div class="field">
+        <input
+          class="input"
+          name="code"
+          [(ngModel)]="joinCode"
+          placeholder="Enter room code"
+        />
+      </div>
+      <button class="button is-primary is-fullwidth">Join Team</button>
+    </form>
+
+    <hr />
+    <h2 class="subtitle is-6">My Teams</h2>
+    <ul>
+      <li *ngFor="let t of teams">
+        <a
+          [routerLink]="['/workspace/team', t._id]"
+          (click)="loadTeamMembers(t._id)"
+        >
+          {{ t.name }}
+        </a>
+      </li>
+    </ul>
+  </div>
+
+  <!-- Manage Members -->
+  <div *ngIf="teamMembers.length">
+    <h2 class="subtitle is-6">Manage Team Roles</h2>
+    <ul>
+      <li *ngFor="let m of teamMembers" class="mb-2">
+        {{ m.userId.name || m.userId.email }} —
+
+        <!-- Role Selection (Admin, not self) -->
+        <select
+          *ngIf="isAdmin && m.userId._id !== currentUserId"
+          [(ngModel)]="m.role"
+          (change)="updateMemberRole(m.userId._id, m.role)"
+          class="select is-small ml-2"
+        >
+          <option value="admin">Admin</option>
+          <option value="editor">Editor</option>
+          <option value="viewer">Viewer</option>
+        </select>
+
+        <!-- Just role name if not editable -->
+        <span
+          *ngIf="!isAdmin || m.userId._id === authService.currentUserId"
+          class="ml-2"
+        >
+          {{ m.role }}
+        </span>
+
+        <!-- Kick Button (Admin only, not self) -->
+        <button
+          *ngIf="isAdmin && m.userId._id !== currentUserId"
+          class="button is-danger is-small ml-2"
+          (click)="removeMember(m.userId._id)"
+        >
+          Kick
+        </button>
+      </li>
+    </ul>
+  </div>
+</div>

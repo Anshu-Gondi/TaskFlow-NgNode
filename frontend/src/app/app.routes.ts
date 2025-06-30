@@ -10,14 +10,68 @@ import { AiSchedulerComponent } from './pages/ai-scheduler/ai-scheduler.componen
 
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
-  { path: 'new-list', component: NewListComponent },
-  { path: 'edit-list/:listId', component: EditListComponent },
-  { path: 'lists/:listId/tasks/:taskId/edit', component: EditTaskComponent},
+
+  /* ───── Authentication ───── */
   { path: 'login', component: LoginPageComponent },
   { path: 'signup', component: SignupPageComponent },
-  { path: 'lists', component: TaskViewComponent },
-  { path: 'lists/:listId', component: TaskViewComponent },
-  { path: 'lists/:listId/tasks', component: TaskViewComponent },
-  { path: 'lists/:listId/new-task', component: NewTaskComponent },
-  { path: 'lists/:listId/ai-scheduler', component: AiSchedulerComponent }
+
+  /* ───── Solo Workspace Routes (mapped to /lists backend) ───── */
+  { path: 'workspace/solo', component: TaskViewComponent },
+  { path: 'workspace/solo/lists/:listId', component: TaskViewComponent },
+  { path: 'workspace/solo/new-list', component: NewListComponent },
+  { path: 'workspace/solo/lists/:listId/edit', component: EditListComponent },
+  {
+    path: 'workspace/solo/lists/:listId/new-task',
+    component: NewTaskComponent,
+  },
+  {
+    path: 'workspace/solo/lists/:listId/tasks/:taskId/edit',
+    component: EditTaskComponent,
+  },
+  {
+    path: 'workspace/solo/lists/:listId/ai-scheduler',
+    component: AiSchedulerComponent,
+  },
+
+  /* ───── Team Workspace Routes (still mapped to /teams/:teamId/lists) ───── */
+  { path: 'workspace/team/:teamId', component: TaskViewComponent },
+  { path: 'workspace/team/:teamId/lists/:listId', component: TaskViewComponent },
+  { path: 'workspace/team/:teamId/new-list', component: NewListComponent },
+  {
+    path: 'workspace/team/:teamId/lists/:listId/edit',
+    component: EditListComponent,
+  },
+  {
+    path: 'workspace/team/:teamId/lists/:listId/new-task',
+    component: NewTaskComponent,
+  },
+  {
+    path: 'workspace/team/:teamId/lists/:listId/tasks/:taskId/edit',
+    component: EditTaskComponent,
+  },
+  {
+    path: 'workspace/team/:teamId/lists/:listId/ai-scheduler',
+    component: AiSchedulerComponent,
+  },
+
+  /* ───── Team Hub ───── */
+  {
+    path: 'teams',
+    loadComponent: () =>
+      import('./pages/team-hub/team-hub.component').then(
+        (m) => m.TeamHubComponent
+      ),
+  },
+
+  /* ───── Workspace Selector ───── */
+  {
+    path: 'choose-workspace',
+    loadComponent: () =>
+      import('./pages/workspace-selector/workspace-selector.component').then(
+        (m) => m.WorkspaceSelectorComponent
+      ),
+  },
+
+  /* ───── Fallback ───── */
+  { path: '**', redirectTo: 'login' },
 ];

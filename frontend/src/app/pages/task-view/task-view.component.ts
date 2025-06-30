@@ -1,5 +1,5 @@
+// src/app/pages/task-view/task-view.component.ts
 import { Component, OnInit } from '@angular/core';
-import { TaskService } from '../../task.service';
 import {
   ActivatedRoute,
   Params,
@@ -7,127 +7,223 @@ import {
   RouterLink,
   RouterLinkActive,
 } from '@angular/router';
-import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { TaskService } from '../../task.service';
 import { List } from '../../models/list.model';
 import { Task } from '../../models/task.model';
+
+/* for team members */
+import { TeamService } from '../../team-service.service';
+import { AuthService } from '../../auth.service';
 
 @Component({
   selector: 'app-task-view',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterLinkActive, FormsModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    RouterModule,
+    RouterLink,
+    RouterLinkActive,
+  ],
   templateUrl: './task-view.component.html',
   styleUrls: ['./task-view.component.scss'],
 })
 export class TaskViewComponent implements OnInit {
+  /* ───────── STATE ───────── */
   lists: List[] = [];
   tasks: Task[] = [];
   listId: string | null = null;
+  teamId: string | null = null;
 
-  filterPriority: string = '';
-  sortAsc: boolean = true;
+  /* ui helpers */
+  filterPriority = '';
+  sortAsc = true;
+
+  /* NEW: Team member modal logic */
+  teamMembers: any[] = [];
+  isAdmin = false;
+  membersOpen = false;
 
   constructor(
-    private taskService: TaskService,
+    private taskSvc: TaskService,
+    private teamSvc: TeamService,   // ✅
+    public authSvc: AuthService,    // ✅
     private route: ActivatedRoute,
     private router: Router
   ) {}
 
   ngOnInit(): void {
-    this.route.params.subscribe((params: Params) => {
-      this.listId = params['listId'] || null;
-      this.listId ? this.fetchTasks(this.listId) : (this.tasks = []);
+    this.route.params.subscribe((p: Params) => {
+      this.teamId = p['teamId'] ?? null;
+      this.listId = p['listId'] ?? null;
+
+      this.loadLists();
+      if (this.listId) {
+        this.loadTasks(this.listId);
+      } else {
+        this.tasks = [];
+      }
+
+      // ✅ load members if team view
+      if (this.teamId) {
+        this.loadMembers();
+      }
     });
-    this.fetchLists();
   }
 
-  fetchLists(): void {
-    this.taskService.getLists().subscribe(
-      (lists: List[]) => (this.lists = lists),
-      (error) => this.handleError(error, 'Error fetching lists')
+  private loadLists() {
+    const src$ = this.teamId
+      ? this.taskSvc.getTeamLists(this.teamId)
+      : this.taskSvc.getSoloLists();
+
+    src$.subscribe(
+      (lists) => (this.lists = lists),
+      (err) => this.error('Error fetching lists', err)
     );
   }
 
-  fetchTasks(listId: string): void {
-    this.taskService.getTasks(listId).subscribe(
-      (tasks: Task[]) => (this.tasks = tasks),
-      (error) => this.handleError(error, 'Error fetching tasks')
+  private loadTasks(listId: string) {
+    const src$ = this.teamId
+      ? this.taskSvc.getTeamTasks(this.teamId!, listId)
+      : this.taskSvc.getSoloTasks(listId);
+
+    src$.subscribe(
+      (tasks) => (this.tasks = tasks),
+      (err) => this.error('Error fetching tasks', err)
     );
   }
 
-  onTaskClick(task: Task): void {
-    this.taskService
-      .complete(task)
-      .subscribe(() => (task.completed = !task.completed));
+  /* TEAM MEMBER METHODS */
+  loadMembers() {
+    this.teamSvc.getMembers(this.teamId!).subscribe((members) => {
+      this.teamMembers = members;
+      const me = members.find((m: any) => m.userId._id === this.authSvc.currentUserId);
+      this.isAdmin = me?.role === 'admin';
+    });
   }
 
-  onDeleteListClick(): void {
-    if (!this.listId) return alert('No list selected to delete.');
+  toggleMembers() {
+    this.membersOpen = !this.membersOpen;
+  }
 
-    if (confirm('Are you sure you want to delete this list and all its tasks?')) {
-      this.taskService.deleteList(this.listId).subscribe(
-        () => {
-          this.lists = this.lists.filter((list) => list._id !== this.listId);
-          this.listId = null;
-          this.tasks = [];
-          alert('List deleted successfully.');
-          this.router.navigate(['/lists']);
-        },
-        (error) => this.handleError(error, 'Failed to delete the list')
+  changeRole(memberId: string, newRole: string) {
+    this.teamSvc.updateRole(this.teamId!, memberId, newRole).subscribe(() => {
+      this.loadMembers();
+    });
+  }
+
+  kick(memberId: string) {
+    if (!confirm('Remove member from team?')) return;
+    this.teamSvc.removeMember(this.teamId!, memberId).subscribe(() => {
+      this.loadMembers();
+    });
+  }
+
+  onTaskClick(t: Task) {
+    this.taskSvc.complete(t).subscribe(() => (t.completed = !t.completed));
+  }
+
+  linkToEditList(listId: string) {
+    return [...this.base(), 'lists', listId, 'edit'];
+  }
+
+  deleteList(listId: string) {
+    if (!confirm('Delete this list and all its tasks?')) return;
+
+    const src$ = this.teamId
+      ? this.taskSvc.deleteTeamList(this.teamId!, listId)
+      : this.taskSvc.deleteSoloList(listId);
+
+    src$.subscribe({
+      next: () => {
+        this.lists = this.lists.filter((l) => l._id !== listId);
+        if (this.listId === listId) {
+          this.router.navigate(this.base());
+        }
+      },
+      error: (err) => this.error('Error deleting list', err),
+    });
+  }
+
+  onTaskEditClick(t: Task) {
+    this.router.navigate(this.linkToTaskEdit(t._listId, t._id));
+  }
+
+  deleteTask(taskId: string) {
+    if (!this.listId) {
+      return;
+    }
+    const src$ = this.teamId
+      ? this.taskSvc.deleteTeamTask(this.teamId!, this.listId, taskId)
+      : this.taskSvc.deleteSoloTask(this.listId, taskId);
+
+    if (confirm('Delete this task?')) {
+      src$.subscribe(
+        () => (this.tasks = this.tasks.filter((t) => t._id !== taskId)),
+        (e) => this.error('Failed to delete task', e)
       );
     }
   }
 
-  givem(taskId: string): void {
-    if (!taskId || !this.listId) {
-      return alert('Task ID is required to delete the task.');
-    }
-
-    if (confirm('Are you sure you want to delete this task?')) {
-      this.taskService.deleteTask(this.listId, taskId).subscribe(
-        () => {
-          this.tasks = this.tasks.filter((task) => task._id !== taskId);
-          alert('Task deleted successfully.');
-        },
-        (error) => this.handleError(error, 'Failed to delete the task')
-      );
-    }
+  switchWorkspace() {
+    localStorage.removeItem('lastWorkspace');
+    this.router.navigate(['/choose-workspace']);
   }
 
-  onTaskEditClick(task: Task): void {
-    if (!task._id || !task._listId)
-      return console.error('Task ID or List ID is missing');
-    this.router.navigate([`/lists/${task._listId}/tasks/${task._id}/edit`]);
+  private base(): string[] {
+    return this.teamId
+      ? ['/workspace', 'team', this.teamId]
+      : ['/workspace', 'solo'];
   }
 
-  private handleError(error: any, message: string): void {
-    console.error(message, error);
-    alert(message);
+  getListLink(listId: string) {
+    return [...this.base(), 'lists', listId];
+  }
+  getNewListLink() {
+    return [...this.base(), 'new-list'];
+  }
+  getAiSchedulerLink() {
+    return [...this.base(), 'lists', this.listId!, 'ai-scheduler'];
+  }
+  getNewTaskLink() {
+    return [...this.base(), 'lists', this.listId!, 'new-task'];
+  }
+  linkToTaskEdit(listId: string, taskId: string) {
+    return [...this.base(), 'lists', listId, 'tasks', taskId, 'edit'];
   }
 
-  // PRIORITY
-  priorityLabel(priority: number): string {
-    const map = ['🟢 Low', '⏳ Medium', '⚠️ High', '🔥 Urgent'];
-    return map[priority] ?? 'Unknown';
+  private error(msg: string, err: any) {
+    console.error(msg, err);
+    alert(msg);
   }
 
-  priorityClass(priority: number): string {
-    const map = ['is-success', 'is-info', 'is-warning', 'is-danger'];
-    return map[priority] ?? 'is-light';
+  priorityLabel(p: number) {
+    return ['🟢 Low', '⏳ Medium', '⚠️ High', '🔥 Urgent'][p] ?? '–';
+  }
+  priorityClass(p: number) {
+    return (
+      ['is-success', 'is-info', 'is-warning', 'is-danger'][p] ?? 'is-light'
+    );
   }
 
-  // FILTERED & SORTED
   get filteredTasks(): Task[] {
     let filtered = [...this.tasks];
 
     if (this.filterPriority !== '') {
-      filtered = filtered.filter(task => String(task.priority) === this.filterPriority);
+      filtered = filtered.filter(
+        (task) => String(task.priority) === this.filterPriority
+      );
     }
 
     filtered.sort((a, b) => {
       const dateA = a.dueDate || '';
       const dateB = b.dueDate || '';
-      return this.sortAsc ? dateA.localeCompare(dateB) : dateB.localeCompare(dateA);
+      return this.sortAsc
+        ? dateA.localeCompare(dateB)
+        : dateB.localeCompare(dateA);
     });
 
     return filtered;
@@ -137,7 +233,6 @@ export class TaskViewComponent implements OnInit {
     this.sortAsc = !this.sortAsc;
   }
 
-  // BADGE
   isOverdue(dateStr: string | undefined | null): boolean {
     if (!dateStr) return false;
     const now = new Date();

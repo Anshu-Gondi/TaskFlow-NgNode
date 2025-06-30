@@ -29,7 +29,8 @@ export class LoginPageComponent {
   ngAfterViewInit() {
     if (typeof google !== 'undefined') {
       google.accounts.id.initialize({
-        client_id: '931212072659-sfnnpu9j3uod34u8uqt7p9nmrovqd46f.apps.googleusercontent.com',
+        client_id:
+          '931212072659-sfnnpu9j3uod34u8uqt7p9nmrovqd46f.apps.googleusercontent.com',
         callback: this.handleGoogleSignIn.bind(this),
         ux_mode: 'popup',
       });
@@ -48,16 +49,18 @@ export class LoginPageComponent {
   }
 
   onLoginButtonClicked(email: string, password: string) {
-    this.errorMessage = ''; // Reset previous error message
+    this.errorMessage = '';
     if (!email || !password) {
       this.errorMessage = 'Email and password are required!';
       return;
     }
 
     this.authService.login(email, password).subscribe({
-      next: (response: any) => {
-        console.log('Login successful:', response);
-        this.router.navigate(['lists']);
+      next: () => {
+        const last = localStorage.getItem('lastWorkspace');
+        if (last === 'solo') this.router.navigate(['/workspace/solo']);
+        else if (last === 'team') this.router.navigate(['/teams']);
+        else this.router.navigate(['/choose-workspace']);
       },
       error: (err: HttpErrorResponse) => {
         this.errorMessage =
@@ -76,7 +79,10 @@ export class LoginPageComponent {
 
     this.authService.googleSignIn(credential).subscribe({
       next: () => {
-        this.router.navigate(['lists']);
+        const last = localStorage.getItem('lastWorkspace');
+        if (last === 'solo') this.router.navigate(['/workspace/solo']);
+        else if (last === 'team') this.router.navigate(['/teams']);
+        else this.router.navigate(['/choose-workspace']);
       },
       error: (error) => {
         this.errorMessage = 'Google Sign-In failed. Please try again.';

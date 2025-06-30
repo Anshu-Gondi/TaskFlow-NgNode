@@ -2,21 +2,31 @@
   <div class="ai-box">
     <h1 class="title has-text-warning">🔮 AI Scheduler</h1>
 
-    <button class="button is-link is-medium schedule-button" (click)="generateSchedule()">
-      Generate Optimized Schedule
+    <button
+      class="button is-link is-medium schedule-button"
+      [disabled]="loading"
+      (click)="generateSchedule()">
+      {{ loading ? 'Thinking…' : 'Generate Optimized Schedule' }}
     </button>
 
-    <div class="schedule-result" *ngIf="schedule && schedule.length > 0">
+    <!-- Result -->
+    <div class="schedule-result" *ngIf="schedule.length">
       <h2 class="subtitle has-text-dark mt-4">📋 Recommended Task Order</h2>
+
       <div class="schedule-card" *ngFor="let task of schedule">
         <p class="task-title">{{ task.title }}</p>
         <p class="task-meta">
           <span class="tag is-rounded" [ngClass]="priorityClass(task.priority)">
             {{ priorityLabel(task.priority) }}
           </span>
-          <span>📅 {{ task.dueDate | date: 'MMM d, y' }}</span>
+          <span *ngIf="task.dueDate">📅 {{ task.dueDate | date:'MMM d, y' }}</span>
         </p>
       </div>
     </div>
+
+    <!-- Empty‑state -->
+    <p class="has-text-grey" *ngIf="!loading && !schedule.length">
+      Click the button to let AI suggest an order.
+    </p>
   </div>
 </div>

@@ -10,10 +10,14 @@ const { mongoose } = require("./db/mongoose");
 const port = process.env.PORT || 3000;
 
 // Load in the mongoose models
-const { List, Task, User, GoogleUser } = require("./db/models/index");
+const { List, Task, User, GoogleUser, Team } = require("./db/models/index");
 
 //jwt module import 
 const jwt = require('jsonwebtoken');
+
+// authorization helper for team endpoints
+const { authorizeTeam } = require('./middleware/authorizeTeam');
+const shortid = require('shortid');
 
 /* MIDDLEWARE */
 
@@ -21,27 +25,27 @@ const jwt = require('jsonwebtoken');
 app.use(bodyParser.json());
 
 // CORS HEADERS MIDDLEWARE
-app.use(function (req, res, next) {
-  res.header("Access-Control-Allow-Origin", "http://localhost:4200"); // Allow requests from your Angular app
-  res.header(
-    "Access-Control-Allow-Headers",
-    "Origin, X-Requested-With, Content-Type, Accept, Authorization"
-  );
-  res.header(
-    "Access-Control-Allow-Methods",
-    "GET, POST, PUT, PATCH, DELETE, OPTIONS" // Include HTTP methods your API supports
-  );
+const cors = require('cors');
 
-  // Handle preflight requests
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(200); // Respond OK for preflight requests
-  }
+app.use(cors({
+  origin: 'http://localhost:4200',
+  credentials: true,
+  methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: [
+    'Content-Type',
+    'x-access-token',
+    'Authorization',
+    'x-refresh-token',
+    '_id',
+    'Origin',
+    'X-Requested-With',
+    'Accept',
+  ],
+}));
 
-  next();
-});
 
 /**
- * Middleware to authenticate users via JWT token
+ * Middleware to authenicate users via JWT token
  * Purpose: Ensure the user is authenticated by validating the JWT token
  */
 const authenicate = (req, res, next) => {
@@ -113,299 +117,467 @@ let VerifySession = (req, res, next) => {
 
 // Route  Handlers
 
-// List Routes
+/* ------------------------------------------------------------------
+   SOLO LIST  ROUTES  (personal workspace)
+-------------------------------------------------------------------*/
 
 /**
  * GET /lists
- * Purpose: Get all lists
+ * Purpose: Get all solo lists for the authenticated user
  */
-app.get("/lists", authenicate, (req, res) => {
-  // Return an array of all the lists in the database that belong to the authenicated user
-  List.find({
-    _userId: req.user_id
-  })
-    .then((lists) => {
-      res.status(200).send(lists); // Send the lists with a 200 OK status
-    })
-    .catch((err) => {
-      console.error("Error fetching lists:", err); // Log the error for debugging
-      res.status(500).send({ error: "Unable to fetch lists" }); // Send an error response
-    });
+app.get('/lists', authenicate, async (req, res) => {
+  try {
+    const userId = req.user_id;              // <-- use the ID your middleware set
+    const lists  = await List.find({ _userId: userId });
+    return res.status(200).send(lists);
+  } catch (err) {
+    console.error('Error fetching solo lists:', err);
+    return res.status(500).send({ error: 'Unable to fetch lists' });
+  }
 });
 
 /**
  * POST /lists
- * Purpose: Create a new list
+ * Purpose: Create a new solo list
  */
-app.post("/lists", authenicate, (req, res) => {
-  // we want to create a new list in the database (which include id)
-  // the list information (fields) will be passed in via the JSON request body
-  let title = req.body.title;
-
-  let newList = new List({
-    title,
-    _userId: req.user_id
-  });
-  // Save the new list to the database
-  newList
-    .save()
-    .then((listDoc) => {
-      // Respond with the full list document, including the ID
-      res.status(201).send(listDoc); // HTTP 201: Created
-    })
-    .catch((error) => {
-      // Handle potential errors during save operation
-      console.error(error);
-      res.status(500).send({ error: "Internal Server Error" });
-    });
+app.post('/lists', authenicate, async (req, res) => {
+  const { title } = req.body;
+  try {
+    const userId  = req.user_id;             // <-- correct field
+    const newList = new List({ title, _userId: userId });
+    const saved   = await newList.save();
+    return res.status(201).send(saved);
+  } catch (err) {
+    console.error('Error creating list:', err);
+    return res.status(500).send({ error: 'Internal Server Error' });
+  }
 });
 
 /**
  * PATCH /lists/:id
- * Purpose: Update a list
+ * Purpose: Update a solo list (must belong to user)
  */
-app.patch("/lists/:id", authenicate, async (req, res) => {
+app.patch('/lists/:id', authenicate, async (req, res) => {
+  const { id } = req.params;
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).send({ error: 'Invalid ID format' });
+  }
+
   try {
-    // Validate incoming ID
-    const listId = req.params.id;
-    if (!listId.match(/^[0-9a-fA-F]{24}$/)) {
-      return res.status(400).send({ error: "Invalid ID format" });
-    }
-
-    // Perform the update operation ensuring the authenticated user owns the list
-    const updatedList = await List.findOneAndUpdate(
-      { _id: listId, _userId: req.user_id }, // Ensure list belongs to the authenticated user
+    const userId = req.user_id;               // <-- correct field
+    const updated = await List.findOneAndUpdate(
+      { _id: id, _userId: userId },
       { $set: req.body },
-      { new: true } // Return the updated document
+      { new: true }
     );
-
-    // Check if a list was found and updated
-    if (!updatedList) {
-      return res.status(404).send({ error: "List not found or unauthorized" });
+    if (!updated) {
+      return res.status(404).send({ error: 'List not found or unauthorized' });
     }
-
-    // Respond with OK message
-    res.status(200).send(updatedList); // Send the updated list in the response
-  } catch (error) {
-    console.error(error);
-    res.status(500).send({ error: "Internal Server Error" });
+    return res.status(200).send(updated);
+  } catch (err) {
+    console.error('Error updating list:', err);
+    return res.status(500).send({ error: 'Internal Server Error' });
   }
 });
 
 /**
  * DELETE /lists/:id
- * Purpose: Create a new list
+ * Purpose: Delete a solo list + its tasks
  */
-app.delete("/lists/:id", authenicate, async (req, res) => {
+app.delete('/lists/:id', authenicate, async (req, res) => {
+  const { id } = req.params;
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).send({ error: 'Invalid ID format' });
+  }
+
   try {
-    // Validate incoming ID
-    const listId = req.params.id;
-    if (!listId.match(/^[0-9a-fA-F]{24}$/)) {
-      return res.status(400).send({ error: "Invalid ID format" });
+    const userId = req.user_id;               // <-- correct field
+    const removed = await List.findOneAndDelete({ _id: id, _userId: userId });
+    if (!removed) {
+      return res.status(404).send({ error: 'List not found or unauthorized' });
     }
-
-    // Perform the delete operation ensuring the authenticated user owns the list
-    const removedListDoc = await List.findOneAndDelete({
-      _id: listId,
-      _userId: req.user_id // Ensure list belongs to the authenticated user
-    });
-
-    // Check if a list was actually deleted
-    if (!removedListDoc) {
-      return res.status(404).send({ error: "List not found or unauthorized" });
-    }
-
-    // Call deleteTasksFromList to delete tasks in the removed list
-    await deleteTasksFromList(removedListDoc._id);
-
-    // Respond with the deleted list document
-    res.status(200).send(removedListDoc);
-  } catch (error) {
-    console.error(error);
-    res.status(500).send({ error: "Internal Server Error" });
+    await deleteTasksFromList(removed._id);
+    return res.status(200).send(removed);
+  } catch (err) {
+    console.error('Error deleting list:', err);
+    return res.status(500).send({ error: 'Internal Server Error' });
   }
 });
 
-// Function to delete all tasks associated with a given list ID
-async function deleteTasksFromList(listId) {
-  try {
-    await Task.deleteMany({ _listId: listId });
-  } catch (error) {
-    console.error(`Error deleting tasks for list ${listId}:`, error);
-    throw error; // Rethrow the error to handle it in the calling function
-  }
-}
 
-
-// Task Routes
+/* ------------------------------------------------------------------
+   SOLO TASK ROUTES  (under a solo list)
+-------------------------------------------------------------------*/
 
 /**
- * GET /lists/:listid/tasks
- * Purpose: Get all tasks from specific list
+ * GET /lists/:listId/tasks
+ * Purpose: Get tasks for one personal list
  */
-app.get("/lists/:listId/tasks", authenicate, async (req, res) => {
+app.get('/lists/:listId/tasks', authenicate, async (req, res) => {
   const { listId } = req.params;
 
-  // Validate listId
   if (!mongoose.Types.ObjectId.isValid(listId)) {
-    return res.status(400).send({ error: "Invalid listId" });
+    return res.status(400).send({ error: 'Invalid listId' });
   }
 
   try {
-    // Find tasks belonging to the specified listId
+    /* make sure the list really belongs to this user */
+    const list = await List.findOne({ _id: listId, _userId: req.user_id });
+    if (!list) return res.status(404).send({ error: 'List not found or unauthorized' });
+
     const tasks = await Task.find({ _listId: listId });
-
-    // Check if tasks exist
-    if (!tasks || tasks.length === 0) {
-      return res
-        .status(404)
-        .send({ message: "No tasks found for this listId" });
-    }
-
-    // Send tasks if found
-    res.status(200).send(tasks);
-  } catch (error) {
-    console.error("Error fetching tasks:", error);
-    res.status(500).send({ error: "Server error" });
+    return res.status(200).send(tasks);
+  } catch (err) {
+    console.error('Error fetching tasks:', err);
+    return res.status(500).send({ error: 'Server error' });
   }
 });
+
+
 
 /**
  * POST /lists/:listId/tasks
- * Purpose: Create a new task in a specific list
+ * Purpose: Add a task to a personal list
  */
-app.post("/lists/:listId/tasks", authenicate, async (req, res) => {
-  const { listId } = req.params;
+app.post('/lists/:listId/tasks', authenicate, async (req, res) => {
+  const { listId }          = req.params;
   const { title, priority = 0, dueDate = null } = req.body;
 
+  if (!mongoose.Types.ObjectId.isValid(listId)) {
+    return res.status(400).send({ error: 'Invalid listId format' });
+  }
+
   try {
-    // Validate listId format
-    if (!mongoose.Types.ObjectId.isValid(listId)) {
-      return res.status(400).send({ error: "Invalid listId format" });
-    }
+    const list = await List.findOne({ _id: listId, _userId: req.user_id });
+    if (!list) return res.status(404).send({ error: 'List not found or unauthorized' });
 
-    // Validate title
-    if (!title || typeof title !== "string") {
-      return res.status(400).send({ error: "Invalid or missing title" });
-    }
-
-    // Check if the list exists and belongs to the authenticated user
-    const list = await List.findOne({
-      _id: listId,
-      _userId: req.user_id,
-    });
-
-    if (!list) {
-      return res.status(404).send({ error: "List not found or unauthorized" });
-    }
-
-    // Create and save the new task
-    const newTask = new Task({
-      title,
-      _listId: listId,
-      priority,
-      dueDate
-    });
-
-    const newTaskDoc = await newTask.save();
-    res.status(201).send(newTaskDoc); // Send response with 201 status for created resource
-  } catch (error) {
-    console.error("Error creating task:", error);
-    res.status(500).send({ error: "Internal Server Error" });
+    const newTask = new Task({ title, _listId: listId, priority, dueDate });
+    await newTask.save();
+    return res.status(201).send(newTask);
+  } catch (err) {
+    console.error('Error creating task:', err);
+    return res.status(500).send({ error: 'Internal Server Error' });
   }
 });
 
+
+
 /**
- * UPDATE /lists/:listId/tasks/:taskId
- * Purpose: To update a task from a list
+ * PATCH /lists/:listId/tasks/:taskId
+ * Purpose: Update a task in a personal list
  */
-app.patch("/lists/:listId/tasks/:taskId", authenicate, async (req, res) => {
+app.patch('/lists/:listId/tasks/:taskId', authenicate, async (req, res) => {
   const { listId, taskId } = req.params;
 
+  if (![listId, taskId].every(id => mongoose.Types.ObjectId.isValid(id))) {
+    return res.status(400).send({ error: 'Invalid ID format' });
+  }
+
   try {
-    // Validate listId format
-    if (!mongoose.Types.ObjectId.isValid(listId)) {
-      return res.status(400).send({ error: "Invalid listId format" });
-    }
+    /* first, confirm ownership of the list                      */
+    const list = await List.findOne({ _id: listId, _userId: req.user_id });
+    if (!list) return res.status(404).send({ error: 'List not found or unauthorized' });
 
-    // Validate taskId format
-    if (!mongoose.Types.ObjectId.isValid(taskId)) {
-      return res.status(400).send({ error: "Invalid taskId format" });
-    }
-
-    // Check if the list exists and belongs to the authenticated user
-    const list = await List.findOne({
-      _id: listId,
-      _userId: req.user_id, // Ensure the authenticated user owns the list
-    });
-
-    if (!list) {
-      return res.status(404).send({ error: "List not found or unauthorized" });
-    }
-
-    // Update the task if it belongs to the list
     const updatedTask = await Task.findOneAndUpdate(
-      { _id: taskId, _listId: listId }, // Ensure the task belongs to the specified list
+      { _id: taskId, _listId: listId },
       { $set: req.body },
-      { new: true, runValidators: true } // Return the updated task and validate the changes
+      { new: true, runValidators: true }
     );
 
     if (!updatedTask) {
-      return res.status(404).send({ error: "Task not found or unauthorized" });
+      return res.status(404).send({ error: 'Task not found' });
     }
-
-    res.status(200).send({ message: "Task updated successfully", updatedTask });
-  } catch (error) {
-    console.error("Error updating task:", error);
-    res.status(500).send({ error: "Internal Server Error" });
+    return res.status(200).send(updatedTask);
+  } catch (err) {
+    console.error('Error updating task:', err);
+    return res.status(500).send({ error: 'Internal Server Error' });
   }
 });
+
+
 
 /**
  * DELETE /lists/:listId/tasks/:taskId
- * Purpose: To delete a task from a list
+ * Purpose: Remove a task from a personal list
  */
-app.delete("/lists/:listId/tasks/:taskId", authenicate, async (req, res) => {
+app.delete('/lists/:listId/tasks/:taskId', authenicate, async (req, res) => {
   const { listId, taskId } = req.params;
 
+  if (![listId, taskId].every(id => mongoose.Types.ObjectId.isValid(id))) {
+    return res.status(400).send({ error: 'Invalid ID format' });
+  }
+
   try {
-    // Validate listId format
-    if (!mongoose.Types.ObjectId.isValid(listId)) {
-      return res.status(400).send({ error: "Invalid listId format" });
+    const list = await List.findOne({ _id: listId, _userId: req.user_id });
+    if (!list) return res.status(404).send({ error: 'List not found or unauthorized' });
+
+    const removed = await Task.findOneAndDelete({ _id: taskId, _listId: listId });
+    if (!removed) {
+      return res.status(404).send({ error: 'Task not found' });
     }
-
-    // Validate taskId format
-    if (!mongoose.Types.ObjectId.isValid(taskId)) {
-      return res.status(400).send({ error: "Invalid taskId format" });
-    }
-
-    // Check if the list exists and belongs to the authenticated user
-    const list = await List.findOne({
-      _id: listId,
-      _userId: req.user_id, // Ensure the authenticated user owns the list
-    });
-
-    if (!list) {
-      return res.status(404).send({ error: "List not found or unauthorized" });
-    }
-
-    // Find and delete the task
-    const removedTaskDoc = await Task.findOneAndDelete({
-      _id: taskId,
-      _listId: listId, // Ensure the task belongs to the specified list
-    });
-
-    if (!removedTaskDoc) {
-      return res.status(404).send({ error: "Task not found or unauthorized" });
-    }
-
-    res.status(200).send({ message: "Task deleted successfully", removedTaskDoc });
-  } catch (error) {
-    console.error("Error deleting task:", error);
-    res.status(500).send({ error: "Internal Server Error" });
+    return res.status(200).send(removed);
+  } catch (err) {
+    console.error('Error deleting task:', err);
+    return res.status(500).send({ error: 'Internal Server Error' });
   }
 });
 
+/* ------------------------------------------------------------------
+   TEAM LIST ROUTES (admin-only for write ops)
+-------------------------------------------------------------------*/
+
+/**
+ * GET /teams/:teamId/lists
+ * Purpose: Get all lists in a team (viewer+)
+ */
+app.get(
+  '/teams/:teamId/lists',
+  authenicate,
+  authorizeTeam(['viewer', 'editor', 'admin']),
+  async (req, res) => {
+    try {
+      const lists = await List.find({ teamId: req.params.teamId });
+      res.status(200).send(lists);
+    } catch (err) {
+      console.error('Error fetching team lists:', err);
+      res.status(500).send({ error: 'Internal Server Error' });
+    }
+  }
+);
+
+/**
+ * POST /teams/:teamId/lists
+ * Purpose: Create a new list in the team (admin-only)
+ */
+app.post(
+  '/teams/:teamId/lists',
+  authenicate,
+  authorizeTeam(['admin']),
+  async (req, res) => {
+    const { title } = req.body;
+
+    if (!title || !title.trim()) {
+      return res.status(400).send({ error: 'Title is required' });
+    }
+
+    try {
+      const newList = new List({
+        title,
+        teamId: req.params.teamId
+      });
+
+      await newList.save();
+      res.status(201).send(newList);
+    } catch (err) {
+      console.error('Error creating team list:', err);
+      res.status(500).send({ error: 'Internal Server Error' });
+    }
+  }
+);
+
+/**
+ * PATCH /teams/:teamId/lists/:listId
+ * Purpose: Rename a team list (admin-only)
+ */
+app.patch(
+  '/teams/:teamId/lists/:listId',
+  authenicate,
+  authorizeTeam(['admin']),
+  async (req, res) => {
+    const { listId, teamId } = req.params;
+    const { title } = req.body;
+
+    try {
+      const updated = await List.findOneAndUpdate(
+        { _id: listId, teamId },
+        { $set: { title } },
+        { new: true }
+      );
+
+      if (!updated) {
+        return res.status(404).send({ error: 'List not found or unauthorized' });
+      }
+
+      res.status(200).send(updated);
+    } catch (err) {
+      console.error('Error updating team list:', err);
+      res.status(500).send({ error: 'Internal Server Error' });
+    }
+  }
+);
+
+/**
+ * DELETE /teams/:teamId/lists/:listId
+ * Purpose: Delete a team list + its tasks (admin-only)
+ */
+app.delete(
+  '/teams/:teamId/lists/:listId',
+  authenicate,
+  authorizeTeam(['admin']),
+  async (req, res) => {
+    const { listId, teamId } = req.params;
+
+    try {
+      const deleted = await List.findOneAndDelete({ _id: listId, teamId });
+
+      if (!deleted) {
+        return res.status(404).send({ error: 'List not found or unauthorized' });
+      }
+
+      await deleteTasksFromList(listId);
+      res.status(200).send({ message: 'List and its tasks deleted', deleted });
+    } catch (err) {
+      console.error('Error deleting team list:', err);
+      res.status(500).send({ error: 'Internal Server Error' });
+    }
+  }
+);
+
+/* ------------------------------------------------------------------
+   TEAM TASK ROUTES (with role guards and teamId fix)
+-------------------------------------------------------------------*/
+
+/**
+ * GET /teams/:teamId/lists/:listId/tasks  (viewer+)
+ */
+app.get(
+  '/teams/:teamId/lists/:listId/tasks',
+  authenicate,
+  authorizeTeam(['viewer', 'editor', 'admin']),
+  async (req, res) => {
+    try {
+      const { listId } = req.params;
+
+      // Confirm list belongs to this team
+      const list = await List.findOne({ _id: listId, teamId: req.params.teamId });
+      if (!list) return res.status(404).send({ error: 'List not found or unauthorized' });
+
+      const tasks = await Task.find({ _listId: listId });
+      res.status(200).send(tasks);
+    } catch (err) {
+      console.error('Error fetching team tasks:', err);
+      res.status(500).send({ error: 'Internal Server Error' });
+    }
+  }
+);
+
+
+/**
+ * POST /teams/:teamId/lists/:listId/tasks  (editor+)
+ */
+app.post(
+  '/teams/:teamId/lists/:listId/tasks',
+  authenicate,
+  authorizeTeam(['editor', 'admin']),
+  async (req, res) => {
+    const { title, priority = 0, dueDate = null } = req.body;
+    const { listId, teamId } = req.params;
+
+    try {
+      const list = await List.findOne({ _id: listId, teamId });
+      if (!list) return res.status(404).send({ error: 'List not found or unauthorized' });
+
+      const newTask = new Task({
+        title,
+        _listId: listId,
+        _teamId: teamId,
+        priority,
+        dueDate
+      });
+
+      await newTask.save();
+      res.status(201).send(newTask);
+    } catch (err) {
+      console.error('Error creating team task:', err);
+      res.status(500).send({ error: 'Internal Server Error' });
+    }
+  }
+);
+
+
+/**
+ * PATCH /teams/:teamId/lists/:listId/tasks/:taskId  (editor+)
+ */
+app.patch(
+  '/teams/:teamId/lists/:listId/tasks/:taskId',
+  authenicate,
+  authorizeTeam(['editor', 'admin']),
+  async (req, res) => {
+    const { teamId, listId, taskId } = req.params;
+
+    if (![listId, taskId].every(id => mongoose.Types.ObjectId.isValid(id))) {
+      return res.status(400).send({ error: 'Invalid listId or taskId format' });
+    }
+
+    try {
+      const list = await List.findOne({ _id: listId, teamId });
+      if (!list) return res.status(404).send({ error: 'List not found or unauthorized' });
+
+      const updatedTask = await Task.findOneAndUpdate(
+        { _id: taskId, _listId: listId },
+        { $set: req.body },
+        { new: true, runValidators: true }
+      );
+
+      if (!updatedTask) {
+        return res.status(404).send({ error: 'Task not found or unauthorized' });
+      }
+
+      res.status(200).send(updatedTask);
+    } catch (err) {
+      console.error('Error updating team task:', err);
+      res.status(500).send({ error: 'Internal Server Error' });
+    }
+  }
+);
+
+
+/**
+ * DELETE /teams/:teamId/lists/:listId/tasks/:taskId  (editor+)
+ */
+app.delete(
+  '/teams/:teamId/lists/:listId/tasks/:taskId',
+  authenicate,
+  authorizeTeam(['editor', 'admin']),
+  async (req, res) => {
+    const { teamId, listId, taskId } = req.params;
+
+    if (![listId, taskId].every(id => mongoose.Types.ObjectId.isValid(id))) {
+      return res.status(400).send({ error: 'Invalid listId or taskId format' });
+    }
+
+    try {
+      const list = await List.findOne({ _id: listId, teamId });
+      if (!list) return res.status(404).send({ error: 'List not found or unauthorized' });
+
+      const removedTask = await Task.findOneAndDelete({ _id: taskId, _listId: listId });
+      if (!removedTask) {
+        return res.status(404).send({ error: 'Task not found or unauthorized' });
+      }
+
+      res.status(200).send({ message: 'Task deleted successfully', removedTask });
+    } catch (err) {
+      console.error('Error deleting team task:', err);
+      res.status(500).send({ error: 'Internal Server Error' });
+    }
+  }
+);
+
+/* ------------------------------------------------------------------
+   SHARED HELPER
+-------------------------------------------------------------------*/
+
+/**
+ * deleteTasksFromList(listId)
+ * Purpose: Remove every task under a deleted list (solo or team)
+ */
+async function deleteTasksFromList(listId) {
+  try {
+    await Task.deleteMany({ _listId: listId });
+  } catch (err) {
+    console.error(`Error deleting tasks for list ${listId}:`, err);
+  }
+}
 
 // USER ROUTES
 
@@ -591,6 +763,8 @@ if (require.main === module) {
   });
 }
 
+// AI Schedular routes
+
 /**
  * POST /ai/schedule
  * Purpose: Generate and return a schedule for user
@@ -606,6 +780,108 @@ app.post('/ai/schedule', authenicate, async (req, res) => {
     console.error("AI Scheduler Error:", err.toString());
     res.status(err.response?.status || 500).send({ error: 'AI service failed' });
   }
+});
+
+// CREATE A NEW TEAM (you become admin)
+app.post('/teams', authenicate, async (req, res) => {
+  const { name } = req.body;
+  if (!name) return res.status(400).send({ error: 'Name is required' });
+
+  // auto-generate code via shortid
+  const code = shortid.generate();
+  const team = new Team({
+    name,
+    code,
+    memberships: [{ userId: req.user_id, role: 'admin' }]
+  });
+  await team.save();
+  res.status(201).send(team);
+});
+
+// JOIN A TEAM by code
+app.post('/teams/join', authenicate, async (req, res) => {
+  const { code } = req.body;
+  const team = await Team.findOne({ code });
+  if (!team) return res.status(404).send({ error: 'Team not found' });
+
+  // prevent duplicate
+  if (team.memberships.some(m => m.userId.equals(req.user_id))) {
+    return res.status(400).send({ error: 'Already a member' });
+  }
+
+  team.memberships.push({ userId: req.user_id, role: 'viewer' });
+  await team.save();
+  res.send(team);
+});
+
+// LIST YOUR TEAMS
+app.get('/teams', authenicate, async (req, res) => {
+  const teams = await Team.find({ 'memberships.userId': req.user_id });
+  res.send(teams);
+});
+
+/**
+ * GET /teams/:teamId/members
+ * Purpose: list all members + roles
+ */
+app.get('/teams/:teamId/members', authenicate, async (req, res) => {
+  const team = await Team.findById(req.params.teamId)
+    .populate('memberships.userId', 'email name');
+  if (!team) return res.status(404).send({ message: 'Team not found' });
+  res.send(team.memberships);
+});
+
+/**
+ * PATCH /teams/:teamId/members/:userId
+ * Purpose: update a member's role
+ */
+app.patch('/:teamId/members/:userId', authenicate, async (req, res) => {
+  const { role } = req.body;
+  if (!['admin', 'editor', 'viewer'].includes(role))
+    return res.status(400).send({ message: 'Invalid role' });
+
+  const team = await Team.findById(req.params.teamId);
+  if (!team) return res.status(404).send({ message: 'Team not found' });
+
+  // Only allow if current user is admin
+  const requestingMember = team.members.find(m => m.userId.toString() === req.user._id);
+  if (!requestingMember || requestingMember.role !== 'admin')
+    return res.status(403).send({ message: 'Only admin can change roles' });
+
+  // Find and update the target user
+  const memberToUpdate = team.members.find(m => m.userId.toString() === req.params.userId);
+  if (!memberToUpdate) return res.status(404).send({ message: 'User not in team' });
+
+  memberToUpdate.role = role;
+  await team.save();
+  res.send({ message: 'Role updated' });
+});
+
+const { sendEmail } = require('./utils/sendEmail');
+
+// KICK A MEMBER from the team
+// Only admins can kick members
+app.delete('/:teamId/members/:userId', authenicate, async (req, res) => {
+  const team = await Team.findById(req.params.teamId);
+  const userToRemove = await User.findById(req.params.userId);
+
+  if (!team || !userToRemove) return res.status(404).send({ message: 'Invalid team or user' });
+
+  const requester = team.members.find(m => m.userId.toString() === req.user._id);
+  if (!requester || requester.role !== 'admin') return res.status(403).send({ message: 'Forbidden' });
+  if (req.user._id === req.params.userId) return res.status(400).send({ message: 'Cannot kick yourself' });
+
+  team.members = team.members.filter(m => m.userId.toString() !== req.params.userId);
+  await team.save();
+
+  // ⛳ Send email
+  await sendEmail({
+    to: userToRemove.email,
+    subject: `You were removed from team "${team.name}"`,
+    text: `Hello ${userToRemove.name || 'User'},\n\nYou have been removed from the team "${team.name}" by an admin.\n\nIf this was a mistake, please contact your team admin.\n\n- TaskFlow`,
+  });
+
+  res.send({ message: 'User removed and notified' });
 });
 
 

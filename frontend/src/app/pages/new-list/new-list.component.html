@@ -1,6 +1,6 @@
 <div class="new-list-wrapper">
   <div class="new-list-card">
-    <h1 class="title has-text-warning">📝 Create a New List</h1>
+    <h1 class="title has-text-warning">📝 Create a New List</h1>
 
     <input
       #listTitleInput
@@ -10,7 +10,9 @@
     />
 
     <div class="button-row">
-      <button class="button is-light cancel-btn" routerLink="/lists">Cancel</button>
+      <button class="button is-light cancel-btn" [routerLink]="baseRoute()">
+        Cancel
+      </button>
 
       <button
         class="button is-link create-btn"

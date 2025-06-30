@@ -5,38 +5,94 @@
       <h1 class="title has-text-warning has-background-white">LISTS</h1>
 
       <div class="list-menu">
-        <a
-          class="list-menu-item"
+        <div
+          class="list-menu-item is-flex is-justify-content-space-between is-align-items-center"
           *ngFor="let list of lists"
-          [routerLink]="['/lists', list._id]"
-          [routerLinkActive]="['is-active']"
-          [routerLinkActiveOptions]="{ exact: true }"
         >
-          <p>{{ list.title }}</p>
-        </a>
+          <a
+            class="is-flex-grow-1"
+            [routerLink]="getListLink(list._id)"
+            routerLinkActive="is-active"
+            [routerLinkActiveOptions]="{ exact: true }"
+          >
+            <p>{{ list.title }}</p>
+          </a>
+
+          <!-- Cog Dropdown for each list -->
+          <div class="dropdown is-right is-hoverable is-small">
+            <div class="dropdown-trigger">
+              <button
+                class="button is-white is-small"
+                aria-haspopup="true"
+                aria-controls="dropdown-menu"
+              >
+                <span class="icon is-small">
+                  <i class="fas fa-cog"></i>
+                </span>
+              </button>
+            </div>
+            <div class="dropdown-menu" role="menu">
+              <div class="dropdown-content">
+                <a
+                  class="dropdown-item"
+                  [routerLink]="linkToEditList(list._id)"
+                >
+                  ✏️ Edit
+                </a>
+                <a
+                  class="dropdown-item has-text-danger"
+                  (click)="deleteList(list._id)"
+                >
+                  🗑 Delete
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <button
         class="button is-primary has-text-white is-fullwidth"
-        [routerLink]="['/new-list']"
+        [routerLink]="getNewListLink()"
       >
         + New List
       </button>
 
       <ng-container *ngIf="listId">
         <a
-          class="button is-warning is-fullwidth"
-          style="margin-top: 10px"
-          [routerLink]="['/lists', listId, 'ai-scheduler']"
+          class="button is-warning is-fullwidth mt-2"
+          [routerLink]="getAiSchedulerLink()"
         >
           🔮 AI Scheduler
         </a>
       </ng-container>
+
+      <!-- ✅ Team Members (only in team view) -->
+      <ng-container *ngIf="teamId">
+        <button
+          class="button is-link is-fullwidth mt-2"
+          (click)="toggleMembers()"
+        >
+          👥 Members
+        </button>
+      </ng-container>
+
+      <!-- Switch Workspace Button -->
+      <ng-container>
+        <button
+          class="button is-light is-fullwidth mt-2"
+          (click)="switchWorkspace()"
+        >
+          🔄 Switch Workspace
+        </button>
+      </ng-container>
     </div>
 
     <!-- Main Content -->
-    <div class="column is-full-mobile is-three-quarters-desktop tasks-list-container">
-      <!-- Top Bar: Filter & Sort -->
+    <div
+      class="column is-full-mobile is-three-quarters-desktop tasks-list-container"
+    >
+      <!-- Top Bar -->
       <div class="columns is-mobile is-multiline is-vcentered mb-4">
         <div class="column is-half-mobile is-one-third-tablet">
           <div class="select is-small is-fullwidth">
@@ -50,36 +106,17 @@
           </div>
         </div>
         <div class="column is-half-mobile is-one-third-tablet">
-          <button class="button is-small is-fullwidth" (click)="sortByDueDate()">
-            Sort by Due Date {{ sortAsc ? '↑' : '↓' }}
+          <button
+            class="button is-small is-fullwidth"
+            (click)="sortByDueDate()"
+          >
+            Sort by Due Date {{ sortAsc ? "↑" : "↓" }}
           </button>
         </div>
       </div>
-
-      <!-- Tasks Area -->
-    <div class="top-bar">
-      <h1 class="title has-text-warning">TASKS</h1>
-      <div class="dropdown is-hoverable is-right" *ngIf="listId">
-        <div class="dropdown-trigger">
-          <button class="button" aria-haspopup="true" aria-controls="dropdown-menu4">
-            <span class="icon is-small">
-              <i class="fas fa-cog" aria-hidden="true"></i>
-            </span>
-          </button>
-        </div>
-        <div class="dropdown-menu" id="dropdown-menu4" role="menu">
-          <div class="dropdown-content">
-            <a class="dropdown-item" [routerLink]="['/edit-list', listId]">Edit</a>
-            <a (click)="onDeleteListClick()" class="dropdown-item has-text-danger">
-              Delete
-            </a>
-          </div>
-        </div>
-      </div>
-    </div>
-
 
       <!-- Task Cards -->
+      <h1 class="title has-text-warning">TASKS</h1>
       <div
         class="task"
         *ngFor="let task of filteredTasks"
@@ -97,34 +134,41 @@
               >
                 {{ priorityLabel(task.priority) }}
               </span>
-              <span *ngIf="task.dueDate">📅 {{ task.dueDate | date : 'MMM d, y' }}</span>
-              <span *ngIf="task.completed" class="tag is-success is-light">✅ Done</span>
+              <span *ngIf="task.dueDate"
+                >📅 {{ task.dueDate | date : "MMM d, y" }}</span
+              >
+              <span *ngIf="task.completed" class="tag is-success is-light"
+                >✅ Done</span
+              >
               <span
                 *ngIf="isOverdue(task.dueDate) && !task.completed"
                 class="tag is-danger is-light"
+                >⏰ Overdue</span
               >
-                ⏰ Overdue
-              </span>
             </p>
           </div>
           <div class="task-buttons">
             <button class="button" (click)="onTaskEditClick(task)">
               <span class="icon"><i class="fas fa-edit"></i></span>
             </button>
-            <button class="button is-danger" (click)="givem(task._id)">
+            <button class="button is-danger" (click)="deleteTask(task._id)">
               <span class="icon"><i class="fas fa-trash"></i></span>
             </button>
           </div>
         </div>
       </div>
 
-      <!-- Add Task -->
+      <!-- Add Task Button -->
       <div class="add-task-container has-text-centered mt-5">
         <button
           class="button circle-add-button has-text-white is-link"
-          [routerLink]="['/lists', listId, 'new-task']"
+          [routerLink]="getNewTaskLink()"
         >
-          <img src="/plus-icon.svg" alt="Add Icon" style="width: 20px; height: 20px" />
+          <img
+            src="/plus-icon.svg"
+            alt="Add Icon"
+            style="width: 20px; height: 20px"
+          />
         </button>
       </div>
 
@@ -132,7 +176,7 @@
       <ng-template #fallbackState>
         <div class="fallback-container">
           <h2 class="subtitle has-text-grey has-text-centered">
-            {{ listId ? 'No tasks available' : 'No list selected' }}
+            {{ listId ? "No tasks available" : "No list selected" }}
           </h2>
         </div>
       </ng-template>

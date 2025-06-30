@@ -1,37 +1,44 @@
 import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Params, Router, RouterLink } from '@angular/router';
+import { CommonModule } from '@angular/common';
 import { TaskService } from '../../task.service';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { Task } from '../../models/task.model';
+
+// Optional: define proper types if available
+interface TaskUpdatePayload {
+  title: string;
+  priority: number;
+  dueDate: string | null;
+}
 
 @Component({
   selector: 'app-edit-task',
   standalone: true,
-  imports: [RouterLink],
+  imports: [CommonModule, RouterLink],
   templateUrl: './edit-task.component.html',
   styleUrls: ['./edit-task.component.scss'],
 })
 export class EditTaskComponent implements OnInit {
-  listId!: string; // Declare listId
-  taskId!: string; // Declare taskId
+  workspaceType: 'solo' | 'team' = 'solo';
+  teamId: string | null = null;
+  listId!: string;
+  taskId!: string;
 
   constructor(
-    private taskService: TaskService,
+    private taskSvc: TaskService,
     private router: Router,
     private route: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
-    // Extract listId and taskId from route parameters
-    this.listId = this.route.snapshot.paramMap.get('listId')!;
-    this.taskId = this.route.snapshot.paramMap.get('taskId')!;
+    this.route.url.subscribe(segs => {
+      this.workspaceType = segs[1]?.path === 'team' ? 'team' : 'solo';
+    });
 
-    // Add checks to ensure they are retrieved successfully
-    if (!this.listId || !this.taskId) {
-      console.error('List ID or Task ID is missing from the route parameters.');
-      alert('Invalid request: Missing List ID or Task ID.');
-      this.router.navigate(['/lists']);
-      return; // Exit early if missing parameters
-    }
+    this.route.params.subscribe((p: Params) => {
+      this.teamId = p['teamId'] ?? null;
+      this.listId = p['listId'];
+      this.taskId = p['taskId'];
+    });
   }
 
   updateTask(title: string, priorityLabel: string, dueDate: string): void {
@@ -40,21 +47,44 @@ export class EditTaskComponent implements OnInit {
       return;
     }
 
-    const updateData = {
+    const priorityMap: Record<string, number> = {
+      low: 0,
+      medium: 1,
+      high: 2,
+      urgent: 3,
+    };
+
+    const update: TaskUpdatePayload = {
       title,
-      priorityLabel: priorityLabel || 'low', // default fallback
+      priority: priorityMap[priorityLabel] ?? 0,
       dueDate: dueDate || null,
     };
 
-    this.taskService.updateTask(this.listId, this.taskId, updateData).subscribe(
-      () => {
-        alert('Task updated successfully.');
-        this.router.navigate(['/lists', this.listId]);
-      },
-      (error) => {
-        console.error('Error updating task:', error);
-        alert('Failed to update the task. Please try again.');
+    const done = () =>
+      this.router.navigate(this.getListRoute());
+
+    const save$ =
+      this.workspaceType === 'team' && this.teamId
+        ? this.taskSvc.updateTeamTask(this.teamId, this.listId, this.taskId, update)
+        : this.taskSvc.updateSoloTask(this.listId, this.taskId, update);
+
+    save$.subscribe({
+      next: done,
+      error: (err: any) => {
+        console.error('Task update failed', err);
+        alert('Failed to update the task.');
       }
-    );
+    });
+  }
+
+  baseRoute(): string[] {
+    return this.workspaceType === 'team' && this.teamId
+      ? ['/workspace', 'team', this.teamId]
+      : ['/workspace', 'solo'];
+  }
+
+  getListRoute(): string[] {
+    const base = this.baseRoute();
+    return base.concat(['lists', this.listId]);
   }
 }

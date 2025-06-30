@@ -4,16 +4,22 @@
 
     <input
       #listTitleInput
-      class="input is-medium"
+      class="input is-medium list-input"
       type="text"
-      placeholder="Enter list name..."
       [value]="originalTitle"
+      placeholder="Enter new list name…"
     />
 
-    <div class="button-group mt-5">
-      <button class="button is-light cancel-btn" routerLink="/lists">Cancel</button>
+    <div class="button-row">
       <button
-        class="button is-link has-text-white save-btn"
+        class="button is-light cancel-btn"
+        [routerLink]="baseRoute()"
+      >
+        Cancel
+      </button>
+
+      <button
+        class="button is-link update-btn"
         (click)="updateList(listTitleInput.value)"
       >
         Save

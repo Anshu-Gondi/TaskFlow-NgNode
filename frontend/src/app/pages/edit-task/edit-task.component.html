@@ -2,6 +2,7 @@
   <div class="edit-task-card">
     <h1 class="title has-text-warning">✏️ Edit Task</h1>
 
+    <!-- title -->
     <input
       #taskTitleInput
       class="input is-medium task-input"
@@ -9,6 +10,7 @@
       placeholder="Enter task name…"
     />
 
+    <!-- priority -->
     <label class="label mt-4 has-text-weight-semibold">Priority</label>
     <div class="select is-medium is-fullwidth">
       <select #taskPriorityInput>
@@ -19,11 +21,18 @@
       </select>
     </div>
 
+    <!-- due date -->
     <label class="label mt-4 has-text-weight-semibold">Due Date</label>
     <input #taskDueDateInput class="input is-medium task-input" type="date" />
 
+    <!-- buttons -->
     <div class="button-row">
-      <button class="button is-light cancel-btn" routerLink="/lists">Cancel</button>
+      <button
+        class="button is-light cancel-btn"
+        [routerLink]="getListRoute()"
+      >
+        Cancel
+      </button>
 
       <button
         class="button is-link update-btn"

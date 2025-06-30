@@ -11,6 +11,10 @@ const TaskSchema = new mongoose.Schema({
     type: mongoose.Types.ObjectId,
     required: true
   },
+  _teamId: {
+    type: mongoose.Types.ObjectId,
+    default: null  // <- make it optional
+  },
   completed: {
     type: Boolean,
     default: false
