@@ -34,9 +34,10 @@
     <h2 class="subtitle is-6">My Teams</h2>
     <ul>
       <li *ngFor="let t of teams">
+        <!-- prevent full‑page navigation so the member panel stays visible -->
         <a
+          (click)="loadTeamMembers(t._id); $event.preventDefault()"
           [routerLink]="['/workspace/team', t._id]"
-          (click)="loadTeamMembers(t._id)"
         >
           {{ t.name }}
         </a>
@@ -65,7 +66,7 @@
 
         <!-- Just role name if not editable -->
         <span
-          *ngIf="!isAdmin || m.userId._id === authService.currentUserId"
+          *ngIf="!isAdmin || m.userId._id === currentUserId"
           class="ml-2"
         >
           {{ m.role }}

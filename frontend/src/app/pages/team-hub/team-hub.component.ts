@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { Team, TeamService } from '../../team-service.service';
+import { Team, TeamMember, TeamService } from '../../team-service.service';
 import { AuthService } from '../../auth.service';
 
 @Component({
@@ -15,22 +15,32 @@ import { AuthService } from '../../auth.service';
 export class TeamHubComponent implements OnInit {
   newTeamName = '';
   joinCode = '';
+
   teams: Team[] = [];
-  teamMembers: any[] = [];
-  selectedTeamId: string = '';
-  isAdmin: boolean = false;
+  teamMembers: TeamMember[] = [];
+  selectedTeamId = '';
+  isAdmin = false;
 
-  public currentUserId = localStorage.getItem('_id') ?? '';
+  /** always read from AuthService so it stays up‑to‑date */
+  get currentUserId(): string {
+    return this.authSvc.currentUserId ?? '';
+  }
 
-  constructor(private teamSvc: TeamService, private router: Router, public authService: AuthService) {}
+  constructor(
+    private teamSvc: TeamService,
+    private router: Router,
+    public authSvc: AuthService
+  ) {}
 
+  /* ------------ life‑cycle ------------ */
   ngOnInit() {
     this.refreshTeams();
   }
 
+  /* ------------ create / join ------------ */
   createTeam() {
     if (!this.newTeamName.trim()) return;
-    this.teamSvc.createTeam(this.newTeamName).subscribe(() => {
+    this.teamSvc.createTeam(this.newTeamName.trim()).subscribe(() => {
       this.newTeamName = '';
       this.refreshTeams();
     });
@@ -38,41 +48,49 @@ export class TeamHubComponent implements OnInit {
 
   joinTeam() {
     if (!this.joinCode.trim()) return;
-    this.teamSvc.joinWithCode(this.joinCode).subscribe(() => {
-      this.joinCode = '';
-      this.refreshTeams();
+
+    this.teamSvc.joinWithCode(this.joinCode.trim()).subscribe({
+      next: () => {
+        this.joinCode = '';
+        this.refreshTeams();
+      },
+      error: (err) => {
+        if (err.status === 400 && err.error?.error === 'Already a member') {
+          alert('⚠️ You are already a member of this team.');
+        } else {
+          alert('❌ Failed to join team. Please check the code and try again.');
+          console.error('Join team error:', err);
+        }
+      },
     });
   }
 
+  /* ------------ lists ------------ */
   refreshTeams() {
     this.teamSvc.getMyTeams().subscribe((ts) => (this.teams = ts));
   }
 
-  loadTeamMembers(teamId: string) {
-    this.selectedTeamId = teamId;
-    this.teamSvc.getMembers(teamId).subscribe((members) => {
-      this.teamMembers = members;
-      const me = members.find(
-        (m) => m.userId._id === this.authService.currentUserId
+  loadTeamMembers(id: string) {
+    this.selectedTeamId = id;
+    this.teamSvc.getMembers(id).subscribe((ms) => {
+      this.teamMembers = ms;
+      this.isAdmin = ms.some(
+        (m) => m.userId._id === this.currentUserId && m.role === 'admin'
       );
-      this.isAdmin = me?.role === 'admin';
     });
   }
 
-  updateMemberRole(memberId: string, newRole: string) {
-    this.teamSvc
-      .updateRole(this.selectedTeamId, memberId, newRole)
-      .subscribe(() => {
-        alert('Role updated!');
-        this.loadTeamMembers(this.selectedTeamId);
-      });
+  /* ------------ admin actions ------------ */
+  updateMemberRole(uid: string, role: string) {
+    this.teamSvc.updateRole(this.selectedTeamId, uid, role).subscribe(() => {
+      this.loadTeamMembers(this.selectedTeamId);
+    });
   }
 
-  removeMember(userId: string) {
-    if (!confirm('Are you sure you want to remove this member?')) return;
-    this.teamSvc.removeMember(this.selectedTeamId, userId).subscribe(() => {
-      alert('Member removed successfully.');
-      this.loadTeamMembers(this.selectedTeamId); // Refresh the list
+  removeMember(uid: string) {
+    if (!confirm('Remove this member?')) return;
+    this.teamSvc.removeMember(this.selectedTeamId, uid).subscribe(() => {
+      this.loadTeamMembers(this.selectedTeamId);
     });
   }
 }

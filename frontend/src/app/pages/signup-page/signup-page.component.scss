@@ -5,26 +5,73 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  background: linear-gradient(to right, #f0fff4, #e0f7fa);
-  padding: 20px;
+  background: linear-gradient(120deg, #ff4da6 0%, #00fff7 100%);
+  position: relative;
+  overflow: hidden;
+
+  ::before,
+  ::after {
+    content: "";
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.18;
+    pointer-events: none;
+    z-index: 0;
+    animation: orb-move 16s linear infinite alternate;
+  }
+
+  ::before {
+    width: 500px;
+    height: 500px;
+    left: 70vw;
+    top: 10vh;
+    background: radial-gradient(circle, #ff4da6 0%, transparent 70%);
+    animation-delay: 0s;
+  }
+
+  ::after {
+    width: 350px;
+    height: 350px;
+    left: 10vw;
+    top: 70vh;
+    background: radial-gradient(circle, #00fff7 0%, transparent 70%);
+    animation-delay: 6s;
+  }
+}
+
+@keyframes orb-move {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    transform: translateY(-40px) scale(1.08);
+  }
 }
 
 .signup-box {
-  padding: 40px;
+  padding: 2.5rem 2.5rem 2rem 2.5rem;
   max-width: 420px;
   width: 100%;
-  background: #ffffff;
-  border-radius: 16px;
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.12);
-  transition: box-shadow 0.3s ease;
+  background: rgba(255, 77, 166, 0.13);
+  border-radius: 2.2rem;
+  box-shadow: 0 8px 48px 0 #ff4da6, 0 0 0 4px #00fff7;
+  backdrop-filter: blur(18px);
+  border: 2px solid rgba(255, 77, 166, 0.18);
+  transition: box-shadow 0.3s;
+  z-index: 1;
+  position: relative;
+  color: #fafdff;
+  text-shadow: 0 1px 2px #232526;
 
   .title {
     font-family: 'Nunito', sans-serif;
     font-size: 2rem;
-    font-weight: 700;
+    font-weight: 900;
     text-align: center;
     margin-bottom: 24px;
-    color: #222;
+    color: #ff4da6;
+    text-shadow: 0 0 8px #ff4da6, 0 0 16px #00fff7;
   }
 
   .field {
@@ -32,42 +79,51 @@
   }
 
   .input {
-    padding: 12px 14px;
-    border-radius: 8px;
-    font-size: 1rem;
-    background-color: #f4f8ff;
-    border: 1px solid #ccd9e3;
+    padding: 14px 16px;
+    border-radius: 1rem;
+    font-size: 1.1rem;
+    background: rgba(255, 255, 255, 0.13);
+    border: 2px solid #ff4da6;
+    color: #fafdff;
+    box-shadow: 0 0 8px #ff4da633;
 
     &:focus {
       outline: none;
-      border-color: #00bcd4;
-      box-shadow: 0 0 0 2px rgba(0, 188, 212, 0.25);
+      border-color: #00fff7;
+      box-shadow: 0 0 12px #00fff7;
     }
   }
 
   .button.is-primary {
     width: 100%;
-    font-weight: 600;
+    font-weight: 700;
     font-size: 1rem;
     border: none;
-    border-radius: 8px;
-    background-color: #00bcd4;
-    transition: background-color 0.3s;
+    border-radius: 1rem;
+    background: linear-gradient(90deg, #ff4da6 0%, #00fff7 100%);
+    color: #232526;
+    box-shadow: 0 2px 16px #ff4da6;
+    transition: background 0.3s, box-shadow 0.3s;
 
     &:hover {
-      background-color: darken(#00bcd4, 8%);
+      background: linear-gradient(90deg, #00fff7 0%, #ffe156 100%);
+      color: #232526;
+      box-shadow: 0 0 24px #00fff7;
     }
   }
 
   .button.is-link.is-light {
     font-size: 0.95rem;
-    background-color: #f0f4f8;
-    color: #005B96;
-    font-weight: 600;
-    border-radius: 8px;
+    background: transparent;
+    color: #ff4da6;
+    font-weight: 700;
+    border: 2px solid #ff4da6;
+    border-radius: 1rem;
+    margin-top: 0.5rem;
 
     &:hover {
-      background-color: #dceeff;
+      background: #ff4da6;
+      color: #232526;
     }
   }
 
@@ -86,7 +142,7 @@
 /* Responsive tweaks */
 @media (max-width: 768px) {
   .signup-box {
-    padding: 28px;
+    padding: 1.5rem;
 
     .title {
       font-size: 1.6rem;

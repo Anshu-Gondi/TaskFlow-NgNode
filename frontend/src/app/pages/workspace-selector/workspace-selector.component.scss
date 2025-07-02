@@ -1,0 +1,70 @@
+@import '../../../styles.scss';
+
+.centered-content {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(120deg, #232526 0%, #ff4da6 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.box {
+  background: rgba(255,77,166,0.13);
+  border-radius: 2.2rem;
+  box-shadow: 0 8px 48px 0 #ff4da6, 0 0 0 4px #00fff7;
+  backdrop-filter: blur(18px);
+  border: 2px solid rgba(255,77,166,0.18);
+  padding: 2.5rem 2.5rem 2rem 2.5rem;
+  min-width: 340px;
+  max-width: 420px;
+  z-index: 1;
+  position: relative;
+  color: #fafdff;
+  text-shadow: 0 1px 2px #232526;
+  .title {
+    color: #ff4da6;
+    text-shadow: 0 0 8px #ff4da6, 0 0 16px #00fff7;
+    font-weight: 900;
+    margin-bottom: 1.5rem;
+  }
+  .subtitle {
+    color: #00fff7;
+    text-shadow: 0 0 8px #00fff7;
+    font-weight: 700;
+  }
+  .buttons {
+    margin-bottom: 1.5rem;
+    .button {
+      border-radius: 10px;
+      font-weight: 700;
+      box-shadow: 0 4px 10px rgba(#ff4da6, 0.35);
+      transition: transform 0.2s, box-shadow 0.2s;
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(#ff4da6, 0.45);
+      }
+      &.is-primary {
+        background: linear-gradient(90deg, #00fff7 0%, #ff4da6 100%);
+        color: #232526;
+        border: none;
+      }
+      &.is-link {
+        background: linear-gradient(90deg, #ff4da6 0%, #00fff7 100%);
+        color: #232526;
+        border: none;
+      }
+    }
+  }
+  .button.is-text {
+    color: #ff4da6;
+    background: transparent;
+    border: none;
+    font-weight: 600;
+    &:hover {
+      color: #fff;
+      background: #ff4da6;
+    }
+  }
+}

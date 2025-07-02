@@ -1,185 +1,184 @@
-<div class="centered-content">
-  <div class="task-manager-container columns is-gapless is-multiline">
-    <!-- Sidebar -->
-    <div class="column is-full-mobile is-one-quarter-desktop sidebar">
-      <h1 class="title has-text-warning has-background-white">LISTS</h1>
+<!-- ────────────── BURGER FOR MOBILE ────────────── -->
+<button
+  class="burger button is-white is-small is-hidden-desktop"
+  (click)="sidebarOpen = !sidebarOpen"
+  aria-label="Open menu"
+>
+  <span class="icon"><i class="fas fa-bars"></i></span>
+</button>
 
-      <div class="list-menu">
-        <div
-          class="list-menu-item is-flex is-justify-content-space-between is-align-items-center"
-          *ngFor="let list of lists"
-        >
-          <a
-            class="is-flex-grow-1"
-            [routerLink]="getListLink(list._id)"
-            routerLinkActive="is-active"
-            [routerLinkActiveOptions]="{ exact: true }"
-          >
-            <p>{{ list.title }}</p>
-          </a>
+<!-- ────────────── MAIN LAYOUT ────────────── -->
+<div class="task-manager-container columns is-gapless is-multiline">
 
-          <!-- Cog Dropdown for each list -->
-          <div class="dropdown is-right is-hoverable is-small">
-            <div class="dropdown-trigger">
-              <button
-                class="button is-white is-small"
-                aria-haspopup="true"
-                aria-controls="dropdown-menu"
-              >
-                <span class="icon is-small">
-                  <i class="fas fa-cog"></i>
-                </span>
-              </button>
-            </div>
-            <div class="dropdown-menu" role="menu">
-              <div class="dropdown-content">
-                <a
-                  class="dropdown-item"
-                  [routerLink]="linkToEditList(list._id)"
-                >
-                  ✏️ Edit
-                </a>
-                <a
-                  class="dropdown-item has-text-danger"
-                  (click)="deleteList(list._id)"
-                >
-                  🗑 Delete
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
+  <!-- ────── SIDEBAR / DRAWER ────── -->
+  <aside class="column is-full-mobile is-one-quarter-desktop sidebar" [class.open]="sidebarOpen">
+    <div class="sidebar-header is-flex is-justify-content-space-between is-align-items-center mb-2">
+      <h1 class="title is-5">Task Lists</h1>
       <button
-        class="button is-primary has-text-white is-fullwidth"
-        [routerLink]="getNewListLink()"
-      >
-        + New List
-      </button>
-
-      <ng-container *ngIf="listId">
-        <a
-          class="button is-warning is-fullwidth mt-2"
-          [routerLink]="getAiSchedulerLink()"
-        >
-          🔮 AI Scheduler
-        </a>
-      </ng-container>
-
-      <!-- ✅ Team Members (only in team view) -->
-      <ng-container *ngIf="teamId">
-        <button
-          class="button is-link is-fullwidth mt-2"
-          (click)="toggleMembers()"
-        >
-          👥 Members
-        </button>
-      </ng-container>
-
-      <!-- Switch Workspace Button -->
-      <ng-container>
-        <button
-          class="button is-light is-fullwidth mt-2"
-          (click)="switchWorkspace()"
-        >
-          🔄 Switch Workspace
-        </button>
-      </ng-container>
+        class="delete is-small"
+        (click)="sidebarOpen = false"
+        aria-label="Close menu"
+      ></button>
     </div>
 
-    <!-- Main Content -->
-    <div
-      class="column is-full-mobile is-three-quarters-desktop tasks-list-container"
-    >
-      <!-- Top Bar -->
-      <div class="columns is-mobile is-multiline is-vcentered mb-4">
-        <div class="column is-half-mobile is-one-third-tablet">
-          <div class="select is-small is-fullwidth">
-            <select [(ngModel)]="filterPriority">
-              <option value="">All Priorities</option>
-              <option value="0">Low</option>
-              <option value="1">Medium</option>
-              <option value="2">High</option>
-              <option value="3">Urgent</option>
-            </select>
+    <nav class="list-menu">
+      <div
+        *ngFor="let list of lists"
+        class="list-menu-item is-flex is-justify-content-space-between is-align-items-center"
+        [class.is-active]="list._id === listId"
+      >
+        <a
+          class="is-flex-grow-1"
+          [routerLink]="getListLink(list._id)"
+        >
+          {{ list.title }}
+        </a>
+
+        <div class="dropdown is-hoverable is-right is-small">
+          <div class="dropdown-trigger">
+            <button class="button is-white is-small">
+              <span class="icon is-small">
+                <i class="fas fa-ellipsis-v" aria-hidden="true"></i>
+              </span>
+            </button>
+          </div>
+          <div class="dropdown-menu">
+            <div class="dropdown-content">
+              <a class="dropdown-item" (click)="onEditListClick(list)">✏️ Edit</a>
+              <a class="dropdown-item has-text-danger" (click)="onDeleteListClick(list)">🗑️ Delete</a>
+            </div>
           </div>
         </div>
-        <div class="column is-half-mobile is-one-third-tablet">
-          <button
-            class="button is-small is-fullwidth"
-            (click)="sortByDueDate()"
-          >
-            Sort by Due Date {{ sortAsc ? "↑" : "↓" }}
-          </button>
-        </div>
+      </div>
+    </nav>
+
+    <div class="sidebar-actions mt-4">
+      <button class="button is-small is-primary is-light is-fullwidth" (click)="onCreateListClick()">+ New List</button>
+      <button
+        class="button is-small is-warning is-light is-fullwidth mt-2"
+        (click)="goToAIScheduler()"
+        *ngIf="listId"
+      >
+        🔮 AI Scheduler
+      </button>
+      <button
+        *ngIf="teamId"
+        class="button is-small is-link is-light is-fullwidth mt-2"
+        (click)="toggleMembers()"
+      >
+        👥 Members
+      </button>
+      <button
+        class="button is-small is-link is-light is-fullwidth mt-2"
+        (click)="switchWorkspace()"
+      >
+        🌀 Switch Workspace
+      </button>
+    </div>
+  </aside>
+
+  <!-- ────── MAIN TASK VIEW ────── -->
+  <div class="column is-full-mobile is-three-quarters-desktop tasks-list-container">
+
+    <!-- Sort + Filter Bar -->
+    <div class="neon-bar mb-4 is-flex is-justify-content-space-between is-align-items-center is-flex-wrap-wrap">
+      <div class="neon-select mb-2">
+        <select [(ngModel)]="sortOption" (change)="onSortChange()">
+          <option value="due">Sort by Due Date</option>
+          <option value="priority">Sort by Priority</option>
+          <option value="created">Sort by Created</option>
+        </select>
       </div>
 
-      <!-- Task Cards -->
-      <h1 class="title has-text-warning">TASKS</h1>
+      <div class="neon-select mb-2">
+        <select [(ngModel)]="filterPriority">
+          <option value="">All Priorities</option>
+          <option value="0">Low</option>
+          <option value="1">Medium</option>
+          <option value="2">High</option>
+          <option value="3">Urgent</option>
+        </select>
+      </div>
+
+      <button class="button neon-btn is-small ml-2 mb-2" (click)="onCreateTaskClick()">+ Add Task</button>
+    </div>
+
+    <!-- Task Cards -->
+    <div *ngIf="filteredTasks.length > 0">
       <div
-        class="task"
         *ngFor="let task of filteredTasks"
+        class="neon-card mb-3"
+        [class.completed]="task.completed"
         (click)="onTaskClick(task)"
-        [ngClass]="{ completed: task.completed }"
       >
-        <div class="task-text">
-          <div class="task-info">
-            <p class="task-title has-text-weight-bold">{{ task.title }}</p>
-            <p class="task-meta">
-              <span
-                *ngIf="task.priority !== undefined"
-                class="tag is-rounded"
-                [ngClass]="priorityClass(task.priority)"
-              >
+        <div class="is-flex is-justify-content-space-between is-align-items-center">
+          <div>
+            <p class="task-title-text">{{ task.title }}</p>
+            <div class="task-meta">
+              <span *ngIf="task.priority !== undefined" class="tag" [ngClass]="priorityClass(task.priority)">
                 {{ priorityLabel(task.priority) }}
               </span>
-              <span *ngIf="task.dueDate"
-                >📅 {{ task.dueDate | date : "MMM d, y" }}</span
-              >
-              <span *ngIf="task.completed" class="tag is-success is-light"
-                >✅ Done</span
-              >
-              <span
-                *ngIf="isOverdue(task.dueDate) && !task.completed"
-                class="tag is-danger is-light"
-                >⏰ Overdue</span
-              >
-            </p>
+              <span *ngIf="task.dueDate" class="tag tag-date">
+                📅 {{ task.dueDate | date : 'MMM d, y' }}
+              </span>
+              <span *ngIf="task.completed" class="tag tag-done">✅ Done</span>
+              <span *ngIf="isOverdue(task.dueDate) && !task.completed" class="tag tag-overdue">⏰ Overdue</span>
+            </div>
           </div>
-          <div class="task-buttons">
-            <button class="button" (click)="onTaskEditClick(task)">
-              <span class="icon"><i class="fas fa-edit"></i></span>
-            </button>
-            <button class="button is-danger" (click)="deleteTask(task._id)">
-              <span class="icon"><i class="fas fa-trash"></i></span>
-            </button>
+
+          <div class="task-buttons is-flex">
+            <button class="button is-white is-small mr-1" (click)="onEditTaskClick(task); $event.stopPropagation();">✏️</button>
+            <button class="button is-white is-small has-text-danger" (click)="onDeleteTaskClick(task); $event.stopPropagation();">🗑️</button>
           </div>
         </div>
       </div>
-
-      <!-- Add Task Button -->
-      <div class="add-task-container has-text-centered mt-5">
-        <button
-          class="button circle-add-button has-text-white is-link"
-          [routerLink]="getNewTaskLink()"
-        >
-          <img
-            src="/plus-icon.svg"
-            alt="Add Icon"
-            style="width: 20px; height: 20px"
-          />
-        </button>
-      </div>
-
-      <!-- Fallback -->
-      <ng-template #fallbackState>
-        <div class="fallback-container">
-          <h2 class="subtitle has-text-grey has-text-centered">
-            {{ listId ? "No tasks available" : "No list selected" }}
-          </h2>
-        </div>
-      </ng-template>
     </div>
+
+    <!-- No Tasks Fallback -->
+    <p *ngIf="filteredTasks.length === 0" class="has-text-centered mt-6 has-text-grey-light">
+      No tasks available.
+    </p>
+  </div>
+
+  <!-- ────── MEMBERS PANEL ────── -->
+  <div *ngIf="membersOpen" class="column is-full-mobile is-clipped members-column">
+    <aside class="members-panel box">
+      <button class="delete is-pulled-right" (click)="toggleMembers()"></button>
+      <h2 class="subtitle is-6 mb-3">Board Members</h2>
+
+      <ul>
+        <li *ngFor="let m of teamMembers" class="mb-2">
+          {{ m.userId.name || m.userId.email }}
+
+          <select
+            *ngIf="isAdmin && m.userId._id !== authSvc.currentUserId"
+            class="select is-small ml-2"
+            [(ngModel)]="m.role"
+            (change)="changeRole(m.userId._id, m.role)"
+          >
+            <option value="admin">Admin</option>
+            <option value="editor">Editor</option>
+            <option value="viewer">Viewer</option>
+          </select>
+
+          <span *ngIf="!isAdmin || m.userId._id === authSvc.currentUserId" class="tag is-light ml-2 is-size-7">
+            {{ m.role }}
+          </span>
+
+          <button
+            *ngIf="isAdmin && m.userId._id !== authSvc.currentUserId"
+            class="button is-small is-danger ml-2"
+            (click)="kick(m.userId._id)"
+          >
+            Kick
+          </button>
+        </li>
+      </ul>
+    </aside>
   </div>
 </div>
+
+<!-- ────── FLOATING ADD TASK BUTTON ────── -->
+<button class="circle-add-button" (click)="onCreateTaskClick()">
+  <img src="/plus.svg" alt="Add Task" />
+</button>

@@ -1,45 +1,32 @@
-/* src/app/team-service.service.ts */
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { WebRequestService } from './web-request.service';
+
+export interface TeamMember {
+  userId: { _id: string;  email?: string; name?: string };
+  role: 'viewer' | 'editor' | 'admin';
+}
 
 export interface Team {
   _id: string;
   name: string;
   code: string;
-  memberships: { userId: string; role: 'viewer' | 'editor' | 'admin' }[];
+  memberships: TeamMember[];
 }
 
 @Injectable({ providedIn: 'root' })
 export class TeamService {
   constructor(private req: WebRequestService) {}
 
-  /* ---- create / join / list ---- */
-  createTeam(name: string): Observable<Team> {
-    return this.req.post<Team>('teams', { name });
-  }
+  /* ---------- create / join ---------- */
+  createTeam(name: string)               { return this.req.post<Team>('teams',       { name }); }
+  joinWithCode(code: string)             { return this.req.post<Team>('teams/join',  { code }); }
 
-  joinWithCode(code: string): Observable<Team> {
-    return this.req.post<Team>('teams/join', { code });
-  }
+  /* ---------- list user’s teams ---------- */
+  getMyTeams()                           { return this.req.get<Team[]>('teams'); }
 
-  getMyTeams(): Observable<Team[]> {
-    return this.req.get<Team[]>('teams');
-  }
-
-  /* ---- member management ---- */
-  /** list everyone with their role */
-  getMembers(teamId: string) {
-    return this.req.get<any[]>(`teams/${teamId}/members`);
-  }
-
-  /** admin: change a member’s role */
-  updateRole(teamId: string, userId: string, role: string) {
-    return this.req.patch(`teams/${teamId}/members/${userId}`, { role });
-  }
-
-  /** admin: kick a member */
-  removeMember(teamId: string, userId: string) {
-    return this.req.delete(`teams/${teamId}/members/${userId}`);
-  }
+  /* ---------- members ---------- */
+  getMembers(teamId: string)             { return this.req.get<TeamMember[]>(`teams/${teamId}/members`); }
+  updateRole(teamId: string, u: string, role: string) { return this.req.patch(`teams/${teamId}/members/${u}`, { role }); }
+  removeMember(teamId: string, u: string)             { return this.req.delete(`teams/${teamId}/members/${u}`); }
 }

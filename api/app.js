@@ -128,7 +128,7 @@ let VerifySession = (req, res, next) => {
 app.get('/lists', authenicate, async (req, res) => {
   try {
     const userId = req.user_id;              // <-- use the ID your middleware set
-    const lists  = await List.find({ _userId: userId });
+    const lists = await List.find({ _userId: userId });
     return res.status(200).send(lists);
   } catch (err) {
     console.error('Error fetching solo lists:', err);
@@ -143,9 +143,9 @@ app.get('/lists', authenicate, async (req, res) => {
 app.post('/lists', authenicate, async (req, res) => {
   const { title } = req.body;
   try {
-    const userId  = req.user_id;             // <-- correct field
+    const userId = req.user_id;             // <-- correct field
     const newList = new List({ title, _userId: userId });
-    const saved   = await newList.save();
+    const saved = await newList.save();
     return res.status(201).send(saved);
   } catch (err) {
     console.error('Error creating list:', err);
@@ -240,7 +240,7 @@ app.get('/lists/:listId/tasks', authenicate, async (req, res) => {
  * Purpose: Add a task to a personal list
  */
 app.post('/lists/:listId/tasks', authenicate, async (req, res) => {
-  const { listId }          = req.params;
+  const { listId } = req.params;
   const { title, priority = 0, dueDate = null } = req.body;
 
   if (!mongoose.Types.ObjectId.isValid(listId)) {
@@ -635,7 +635,7 @@ app.post('/users/login', (req, res) => {
   if (!email || !password) {
     return res.status(400).send({ error: "Email and password are required" });
   }
-  
+
   User.findByCredentials(email, password)
     .then((user) => {
       return user.createSession().then((refreshToken) => {
@@ -647,14 +647,14 @@ app.post('/users/login', (req, res) => {
     .then(({ accessToken, refreshToken, user }) => {
       const sanitizedUser = user.toObject();
       delete sanitizedUser.password; // Remove password before sending response
-      
+
       res
-      .header('x-refresh-token', refreshToken)
-      .header('x-access-token', accessToken)
-      .send({
-        _id: sanitizedUser._id,
-        email: sanitizedUser.email,
-        accessToken,
+        .header('x-refresh-token', refreshToken)
+        .header('x-access-token', accessToken)
+        .send({
+          _id: sanitizedUser._id,
+          email: sanitizedUser.email,
+          accessToken,
           refreshToken,
         });
     })
@@ -665,12 +665,12 @@ app.post('/users/login', (req, res) => {
         : e.error || e.message || "Invalid email or password";
       res.status(400).send({ error: message });
     });
-  });
-  
-  /**
-   * GET /users/me/access-token
- * Purpose: Generate and return an access token
- */
+});
+
+/**
+ * GET /users/me/access-token
+* Purpose: Generate and return an access token
+*/
 app.get('/users/me/access-token', VerifySession, (req, res) => {
   req.userObject
     .generateAccessAuthToken()
@@ -835,7 +835,8 @@ app.get('/teams/:teamId/members', authenicate, async (req, res) => {
  * PATCH /teams/:teamId/members/:userId
  * Purpose: update a member's role
  */
-app.patch('/:teamId/members/:userId', authenicate, async (req, res) => {
+// ───────── PATCH role (admin only) ─────────
+app.patch('/teams/:teamId/members/:userId', authenicate, async (req, res) => {
   const { role } = req.body;
   if (!['admin', 'editor', 'viewer'].includes(role))
     return res.status(400).send({ message: 'Invalid role' });
@@ -843,16 +844,16 @@ app.patch('/:teamId/members/:userId', authenicate, async (req, res) => {
   const team = await Team.findById(req.params.teamId);
   if (!team) return res.status(404).send({ message: 'Team not found' });
 
-  // Only allow if current user is admin
-  const requestingMember = team.members.find(m => m.userId.toString() === req.user._id);
-  if (!requestingMember || requestingMember.role !== 'admin')
+  // must be admin
+  const requester = team.memberships.find(m => m.userId.toString() === req.user_id);
+  if (!requester || requester.role !== 'admin')
     return res.status(403).send({ message: 'Only admin can change roles' });
 
-  // Find and update the target user
-  const memberToUpdate = team.members.find(m => m.userId.toString() === req.params.userId);
-  if (!memberToUpdate) return res.status(404).send({ message: 'User not in team' });
+  // update target
+  const member = team.memberships.find(m => m.userId.toString() === req.params.userId);
+  if (!member) return res.status(404).send({ message: 'User not in team' });
 
-  memberToUpdate.role = role;
+  member.role = role;
   await team.save();
   res.send({ message: 'Role updated' });
 });
@@ -861,28 +862,32 @@ const { sendEmail } = require('./utils/sendEmail');
 
 // KICK A MEMBER from the team
 // Only admins can kick members
-app.delete('/:teamId/members/:userId', authenicate, async (req, res) => {
+// ───────── DELETE (kick) ─────────
+app.delete('/teams/:teamId/members/:userId', authenicate, async (req, res) => {
   const team = await Team.findById(req.params.teamId);
   const userToRemove = await User.findById(req.params.userId);
 
-  if (!team || !userToRemove) return res.status(404).send({ message: 'Invalid team or user' });
+  if (!team || !userToRemove)
+    return res.status(404).send({ message: 'Invalid team or user' });
 
-  const requester = team.members.find(m => m.userId.toString() === req.user._id);
-  if (!requester || requester.role !== 'admin') return res.status(403).send({ message: 'Forbidden' });
-  if (req.user._id === req.params.userId) return res.status(400).send({ message: 'Cannot kick yourself' });
+  const requester = team.memberships.find(m => m.userId.toString() === req.user_id);
+  if (!requester || requester.role !== 'admin')
+    return res.status(403).send({ message: 'Forbidden' });
+  if (req.user_id === req.params.userId)
+    return res.status(400).send({ message: 'Cannot kick yourself' });
 
-  team.members = team.members.filter(m => m.userId.toString() !== req.params.userId);
+  team.memberships = team.memberships.filter(
+    m => m.userId.toString() !== req.params.userId
+  );
   await team.save();
 
-  // ⛳ Send email
   await sendEmail({
     to: userToRemove.email,
     subject: `You were removed from team "${team.name}"`,
-    text: `Hello ${userToRemove.name || 'User'},\n\nYou have been removed from the team "${team.name}" by an admin.\n\nIf this was a mistake, please contact your team admin.\n\n- TaskFlow`,
+    text: `Hello ${userToRemove.name || 'User'},\n\nYou have been removed from the team "${team.name}" by an admin.\n\n- TaskFlow`,
   });
 
   res.send({ message: 'User removed and notified' });
 });
-
 
 module.exports = app;
