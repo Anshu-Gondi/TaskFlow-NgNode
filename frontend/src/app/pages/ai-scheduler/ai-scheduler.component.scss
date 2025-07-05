@@ -1,73 +1,178 @@
 @import '../../../styles.scss';
 
+// Unique animated neon background
 .ai-scheduler-container {
+  min-height: 100vh;
   display: flex;
   justify-content: center;
-  padding: 30px 20px;
-  background: linear-gradient(135deg, #a0ffbf, #00ffb3);
-  min-height: 100vh;
+  align-items: center;
+  background: linear-gradient(120deg, #232526 0%, #00fff7 100%);
+  position: relative;
+  overflow: hidden;
+
+  &::before,
+  &::after {
+    content: "";
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.18;
+    pointer-events: none;
+    z-index: 0;
+    animation: orb-move 16s linear infinite alternate;
+  }
+  &::before {
+    width: 600px; height: 600px;
+    left: 65vw; top: 8vh;
+    background: radial-gradient(circle, #00fff7 0%, transparent 70%);
+    animation-delay: 0s;
+  }
+  &::after {
+    width: 400px; height: 400px;
+    left: 10vw; top: 70vh;
+    background: radial-gradient(circle, #a259ff 0%, transparent 70%);
+    animation-delay: 6s;
+  }
 }
 
+@keyframes orb-move {
+  0% { transform: translateY(0) scale(1); }
+  100% { transform: translateY(-40px) scale(1.08); }
+}
+
+// Glassmorphism AI box
 .ai-box {
-  background: white;
-  border-radius: 16px;
-  padding: 40px 30px;
-  max-width: 700px;
+  background: rgba(0,255,247,0.13);
+  border-radius: 2.2rem;
+  box-shadow: 0 8px 48px 0 #00fff7, 0 0 0 4px #a259ff;
+  backdrop-filter: blur(18px);
+  border: 2px solid rgba(0,255,247,0.18);
+  padding: 2.5rem 2.5rem 2rem 2.5rem;
+  max-width: 520px;
   width: 100%;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-  text-align: center;
+  z-index: 1;
+  position: relative;
+  color: #fafdff;
+  text-shadow: 0 1px 2px #232526;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 
   .title {
-    font-weight: 800;
+    color: #00fff7;
+    text-shadow: 0 0 8px #00fff7, 0 0 16px #a259ff;
+    font-weight: 900;
     font-size: 2rem;
-    margin-bottom: 20px;
+    margin-bottom: 1.5rem;
+    letter-spacing: 1px;
   }
 
   .schedule-button {
     font-weight: bold;
-    border-radius: 10px;
-    box-shadow: 0 4px 12px rgba(0, 191, 255, 0.3);
-
+    border-radius: 1.2rem;
+    box-shadow: 0 4px 16px #00fff7;
+    background: linear-gradient(90deg, #00fff7 0%, #a259ff 100%);
+    color: #232526;
+    border: none;
+    font-size: 1.1rem;
+    padding: 0.9rem 2.2rem;
+    margin-bottom: 1.2rem;
+    transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
     &:hover {
+      background: linear-gradient(90deg, #a259ff 0%, #ffe156 100%);
+      color: #232526;
+      box-shadow: 0 0 24px #a259ff;
       transform: scale(1.05);
-      box-shadow: 0 6px 18px rgba(0, 191, 255, 0.4);
+    }
+    &:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
     }
   }
 
   .schedule-result {
     margin-top: 30px;
+    width: 100%;
 
     .subtitle {
       font-weight: 700;
-      font-size: 1.4rem;
+      font-size: 1.3rem;
+      color: #a259ff;
+      text-shadow: 0 0 8px #a259ff;
+      margin-bottom: 1rem;
     }
 
     .schedule-card {
-      background: #fdfdfd;
-      border-radius: 12px;
-      padding: 16px 20px;
-      margin-top: 12px;
+      background: rgba(255,255,255,0.10);
+      border-radius: 1.2rem;
+      padding: 1.1rem 1.5rem;
+      margin-top: 1rem;
       text-align: left;
-      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+      box-shadow: 0 3px 16px #00fff733;
+      border: 2px solid #00fff7;
       transition: 0.2s;
+      position: relative;
+
+      &::before, &::after {
+        content: "";
+        display: block;
+        position: absolute;
+        left: 1.2rem; right: 1.2rem;
+        height: 3px;
+        border-radius: 2px;
+        background: linear-gradient(90deg, #00fff7 0%, #a259ff 100%);
+        filter: blur(1.5px);
+        opacity: 0.5;
+        pointer-events: none;
+      }
+      &::before { top: 0.5rem; }
+      &::after { bottom: 0.5rem; }
 
       &:hover {
-        transform: scale(1.01);
+        transform: scale(1.02);
+        box-shadow: 0 0 24px #a259ff;
+        border-color: #a259ff;
       }
 
       .task-title {
-        font-weight: 600;
+        font-weight: 700;
         font-size: 1.1rem;
         margin-bottom: 6px;
+        color: #00fff7;
+        text-shadow: 0 0 8px #00fff7;
       }
 
       .task-meta {
         display: flex;
         gap: 10px;
-        font-size: 0.9rem;
-        color: #555;
+        font-size: 0.98rem;
+        color: #fafdff;
         flex-wrap: wrap;
+        .tag {
+          background: #a259ff;
+          color: #fff;
+          border-radius: 0.7rem;
+          padding: 0.25rem 0.7rem;
+          font-weight: 700;
+          border: none;
+          box-shadow: 0 0 6px #a259ff;
+        }
       }
     }
+  }
+
+  .has-text-grey {
+    color: #b3b3b3;
+    margin-top: 2rem;
+    font-size: 1.1rem;
+  }
+}
+
+// Responsive tweaks
+@media (max-width: 600px) {
+  .ai-box {
+    padding: 1.2rem 0.7rem;
+    max-width: 98vw;
+    .title { font-size: 1.3rem; }
   }
 }

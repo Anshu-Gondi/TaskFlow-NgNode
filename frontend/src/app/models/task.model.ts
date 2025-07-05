@@ -8,6 +8,7 @@ export class Task {
   applied?: boolean;
   priorityLabel?: 'low' | 'medium' | 'high' | 'urgent';
   _teamId?: string;
+  sortOrder?: number;
 
   constructor(init?: Partial<Task>) {
     Object.assign(this, init);

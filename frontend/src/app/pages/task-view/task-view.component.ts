@@ -39,15 +39,10 @@ export class TaskViewComponent implements OnInit {
 
   /* ───────── UI STATE ───────── */
   public sidebarOpen = false; // burger / drawer
-  public membersOpen = false; // members panel
   selectedList: List | null = null;
 
   public filterPriority = ''; // '', '0', '1', '2', '3'
   public sortOption: 'due' | 'priority' | 'created' = 'due';
-
-  /* Members */
-  teamMembers: any[] = [];
-  isAdmin = false;
 
   constructor(
     private taskSvc: TaskService,
@@ -65,10 +60,6 @@ export class TaskViewComponent implements OnInit {
 
       this.loadLists();
       this.listId ? this.loadTasks(this.listId) : (this.tasks = []);
-
-      if (this.teamId) {
-        this.loadMembers();
-      }
     });
   }
 
@@ -198,6 +189,12 @@ export class TaskViewComponent implements OnInit {
       out = out.filter((t) => String(t.priority) === this.filterPriority);
     }
 
+    /* Sort by sortOrder if present */
+    if (out.length && out.some(t => typeof (t as any).sortOrder === 'number')) {
+      out.sort((a, b) => ((a as any).sortOrder ?? 0) - ((b as any).sortOrder ?? 0));
+      return out;
+    }
+
     /* Sort */
     switch (this.sortOption) {
       case 'priority':
@@ -224,37 +221,10 @@ export class TaskViewComponent implements OnInit {
     return out;
   }
 
-  /* ───────── MEMBER PANEL ───────── */
-  private loadMembers(): void {
-    this.teamSvc.getMembers(this.teamId!).subscribe((members) => {
-      this.teamMembers = members;
-      const me = members.find(
-        (m: any) => m.userId._id === this.authSvc.currentUserId
-      );
-      this.isAdmin = me?.role === 'admin';
-    });
-  }
-
-  toggleMembers(): void {
-    this.membersOpen = !this.membersOpen;
-    if (this.membersOpen && this.teamId) {
-      this.loadMembers();
+  goToMembersPage(): void {
+    if (this.teamId) {
+      this.router.navigate(['/workspace', 'team', this.teamId, 'members']);
     }
-  }
-
-  changeRole(memberId: string, newRole: string): void {
-    this.teamSvc
-      .updateRole(this.teamId!, memberId, newRole)
-      .subscribe(() => this.loadMembers());
-  }
-
-  kick(memberId: string): void {
-    if (!confirm('Remove member from team?')) {
-      return;
-    }
-    this.teamSvc
-      .removeMember(this.teamId!, memberId)
-      .subscribe(() => this.loadMembers());
   }
 
   /* ───────── ROUTE HELPERS ───────── */

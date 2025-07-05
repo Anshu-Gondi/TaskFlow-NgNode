@@ -4,6 +4,7 @@ import { WebRequestService } from './web-request.service';
 import { Task } from './models/task.model';
 import { List } from './models/list.model';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
 export class TaskService {
@@ -89,11 +90,34 @@ export class TaskService {
     teamId?: string
   ): Observable<Task[]> {
     if (isTeam && teamId) {
-      return this.req.get<Task[]>(
+      return this.req.get<{ scheduled: Task[] }>(
         `teams/${teamId}/lists/${listId}/ai-schedule`
+      ).pipe(
+        // Only return the scheduled array
+        map(res => res.scheduled)
       );
     } else {
-      return this.req.get<Task[]>(`lists/${listId}/ai-schedule`);
+      return this.req.get<{ scheduled: Task[] }>(`lists/${listId}/ai-schedule`).pipe(
+        map(res => res.scheduled)
+      );
+    }
+  }
+
+  // Add this method for AI Scheduler apply order
+  updateTaskOrder(task: Task, sortOrder: number): Observable<Task> {
+    if (task._teamId) {
+      return this.updateTeamTask(
+        task._teamId,
+        task._listId,
+        task._id,
+        { sortOrder }
+      );
+    } else {
+      return this.updateSoloTask(
+        task._listId,
+        task._id,
+        { sortOrder }
+      );
     }
   }
 }

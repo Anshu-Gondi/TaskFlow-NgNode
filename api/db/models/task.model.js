@@ -31,6 +31,10 @@ const TaskSchema = new mongoose.Schema({
   dueDate: {
     type: String, // ISO string like "2025-07-01"
     default: null
+  },
+  sortOrder: {
+    type: Number,
+    default: 0
   }
 });
 

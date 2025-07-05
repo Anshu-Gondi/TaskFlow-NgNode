@@ -1,0 +1,389 @@
+@import '../../../styles.scss';
+
+// Unique design: glassmorphism, neon, and animated accent border for member cards
+
+.members-page-bg {
+  min-height: 100vh;
+  background: linear-gradient(120deg, #232526 0%, #ffe156 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+
+  &::before,
+  &::after {
+    content: "";
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.18;
+    pointer-events: none;
+    z-index: 0;
+    animation: orb-move 16s linear infinite alternate;
+  }
+  &::before {
+    width: 500px; height: 500px;
+    left: 70vw; top: 10vh;
+    background: radial-gradient(circle, #ffe156 0%, transparent 70%);
+    animation-delay: 0s;
+  }
+  &::after {
+    width: 350px; height: 350px;
+    left: 10vw; top: 70vh;
+    background: radial-gradient(circle, #00fff7 0%, transparent 70%);
+    animation-delay: 6s;
+  }
+}
+
+.members-glass-card {
+  background: rgba(255,255,255,0.13);
+  border-radius: 2.2rem;
+  box-shadow: 0 8px 48px 0 #ffe156, 0 0 0 4px #00fff7;
+  backdrop-filter: blur(18px);
+  border: 2px solid rgba(255,255,255,0.18);
+  padding: 2.5rem 2.5rem 2rem 2.5rem;
+  max-width: 700px;
+  width: 100%;
+  z-index: 1;
+  position: relative;
+  color: #fafdff;
+  text-shadow: 0 1px 2px #232526;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border-image: linear-gradient(90deg, #ffe156, #00fff7, #ff4da6) 1;
+  border-width: 3px;
+  border-style: solid;
+  animation: border-glow 3s linear infinite alternate;
+}
+
+@keyframes border-glow {
+  0% { box-shadow: 0 0 32px #ffe156, 0 0 64px #00fff7; }
+  100% { box-shadow: 0 0 64px #00fff7, 0 0 128px #ff4da6; }
+}
+
+.members-title {
+  color: #ffe156;
+  text-shadow: 0 0 8px #ffe156, 0 0 16px #00fff7;
+  font-weight: 900;
+  font-size: 2rem;
+  margin-bottom: 1.5rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  background: linear-gradient(90deg, #ffe156, #00fff7, #ff4da6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: title-gradient 5s linear infinite alternate;
+}
+
+@keyframes title-gradient {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
+}
+
+.members-count {
+  width: 100%;
+  text-align: left;
+  margin-bottom: 1rem;
+
+  .tag {
+    font-size: 1.1rem;
+    font-weight: 700;
+    background: #00fff7;
+    color: #232526;
+    box-shadow: 0 0 8px #00fff7;
+    border-radius: 0.7rem;
+    padding: 0.5rem 1.2rem;
+  }
+}
+
+.members-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  width: 100%;
+}
+
+.member-card {
+  background: rgba(255,255,255,0.10);
+  border-radius: 1.2rem;
+  box-shadow: 0 0 24px #ffe156;
+  border: 2px solid #00fff7;
+  min-width: 210px;
+  max-width: 100%;
+  padding: 1.1rem 1.5rem;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+  color: #fff;
+  text-shadow: 0 1px 2px #232526;
+  position: relative;
+  flex-shrink: 0;
+  transition: box-shadow 0.2s, border-color 0.2s;
+  border-image: linear-gradient(90deg, #ffe156, #00fff7, #ff4da6) 1;
+  border-width: 2.5px;
+  border-style: solid;
+  animation: border-glow 2s linear infinite alternate;
+
+  &:hover {
+    box-shadow: 0 0 48px #00fff7, 0 0 96px #ff4da6;
+    border-color: #ff4da6;
+    background: rgba(0,255,247,0.13);
+  }
+
+  .member-select-checkbox {
+    margin-right: 1.2rem;
+    margin-top: 0.5rem;
+    accent-color: #00fff7;
+    width: 1.2rem;
+    height: 1.2rem;
+    flex-shrink: 0;
+  }
+
+  .member-info {
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+
+    .member-name {
+      font-size: 1.08rem;
+      font-weight: 800;
+      color: #ffe156;
+      text-shadow: 0 0 8px #ffe156;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 170px;
+    }
+
+    .member-email {
+      font-size: 0.93em;
+      color: #00fff7;
+      word-break: break-word;
+      max-width: 170px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+
+  .member-role {
+    min-width: 180px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.4rem;
+    width: auto;
+
+    .tag {
+      min-width: 60px;
+      text-align: center;
+      background: #ffe156;
+      color: #232526;
+      font-weight: 700;
+      border-radius: 0.7rem;
+      box-shadow: 0 0 8px #ffe156;
+    }
+
+    .role-and-stats {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      margin-bottom: .4rem;
+    }
+
+    .admin-actions {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      margin-top: .2rem;
+      flex-wrap: wrap;
+
+      .button,
+      .select {
+        margin-bottom: 0;
+      }
+
+      select {
+        min-width: 90px;
+        background: #00fff7;
+        color: #232526;
+        font-weight: 600;
+        border-radius: 0.5rem;
+        padding: 0.3rem 0.5rem;
+        border: none;
+        box-shadow: 0 0 6px #00fff7;
+      }
+
+      .button {
+        border-radius: 0.7rem;
+        background: #ff4da6;
+        color: #fff;
+        border: none;
+        font-weight: 800;
+        box-shadow: 0 0 8px #ff4da6;
+        transition: background 0.2s, box-shadow 0.2s;
+
+        &:hover {
+          background: #ffe156;
+          color: #ff4da6;
+          box-shadow: 0 0 16px #ffe156;
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 900px) {
+  .members-glass-card {
+    padding: 1.2rem 0.7rem;
+    max-width: 98vw;
+
+    .members-title {
+      font-size: 1.3rem;
+    }
+  }
+
+  .member-card {
+    min-width: 140px;
+    max-width: 180px;
+    padding: 0.6rem 0.6rem;
+
+    .member-info .member-name,
+    .member-info .member-email {
+      max-width: 110px;
+    }
+
+    .member-role {
+      .admin-actions {
+        flex-direction: column;
+        align-items: stretch;
+
+        select,
+        .button {
+          width: 100%;
+        }
+      }
+    }
+  }
+}
+
+// 🎯 Role Select Animation
+.animated-select {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover,
+  &:focus {
+    transform: scale(1.05);
+    box-shadow: 0 0 12px #00fff7;
+    background: #e0fffb;
+  }
+}
+
+// 💥 Kick Button Animation
+.animated-button {
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+
+  &:hover {
+    transform: scale(1.07);
+    background: #ff2e7e;
+    box-shadow: 0 0 16px #ffe156;
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+/* ---------- toast stack ---------- */
+.toast-stack {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.animated-toast {
+  animation: slideFade 0.3s ease-out, fadeOut 0.5s ease-in 2.5s forwards;
+  box-shadow: 0 0 12px #00fff7;
+}
+@keyframes slideFade {
+  from {
+    opacity: 0;
+    transform: translateX(50%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+@keyframes fadeOut {
+  to {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+}
+
+/* dropdown + button icon tweaks */
+select option {
+  /* makes the icon & text align nicely in most browsers */
+  padding-left: 0.3rem;
+}
+
+
+@media (max-width: 350px) {
+  .toast-stack { right: .25rem; left: .25rem; }
+}
+.members-page-bg { overflow-y: auto; }
+.members-glass-card { max-height: 90vh; overflow-y: auto; }
+
+.bulk-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.2rem;
+  .bulk-action-btn {
+    min-width: 90px;
+    font-weight: 700;
+    letter-spacing: .5px;
+    box-shadow: 0 0 8px #00fff7;
+    border-radius: 0.7rem;
+    transition: background 0.2s, box-shadow 0.2s;
+    &:hover {
+      box-shadow: 0 0 16px #ffe156;
+      background: #ffe156;
+      color: #00fff7;
+    }
+  }
+}
+
+.role-and-stats {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+}
+
+.stats-pill {
+  font-size: .75rem;
+  padding: .3rem .55rem;
+  border-radius: .6rem;
+  background: rgba(#00fff7,.18);
+  box-shadow: 0 0 6px #00fff7;
+  color: #00fff7;
+  white-space: nowrap;
+
+  .overdue { color: #ff4d4d; }
+}
+
+.members-header-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .6rem;   /* space between tags / buttons */
+}

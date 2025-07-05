@@ -782,6 +782,57 @@ app.post('/ai/schedule', authenicate, async (req, res) => {
   }
 });
 
+/**
+ * GET /lists/:listId/ai-schedule
+ * Purpose: Get AI-optimized schedule for a solo list
+ */
+app.get('/lists/:listId/ai-schedule', authenicate, async (req, res) => {
+  const { listId } = req.params;
+  if (!mongoose.Types.ObjectId.isValid(listId)) {
+    return res.status(400).send({ error: 'Invalid listId' });
+  }
+  try {
+    const list = await List.findOne({ _id: listId, _userId: req.user_id });
+    if (!list) return res.status(404).send({ error: 'List not found or unauthorized' });
+
+    const tasks = await Task.find({ _listId: listId });
+    // Call AI scheduler microservice
+    const { data } = await axios.post('http://localhost:5001/api/schedule', { tasks });
+    res.status(200).json(data);
+  } catch (err) {
+    console.error("AI Scheduler Error (solo):", err.toString());
+    res.status(500).send({ error: 'AI service failed' });
+  }
+});
+
+/**
+ * GET /teams/:teamId/lists/:listId/ai-schedule
+ * Purpose: Get AI-optimized schedule for a team list
+ */
+app.get(
+  '/teams/:teamId/lists/:listId/ai-schedule',
+  authenicate,
+  authorizeTeam(['viewer', 'editor', 'admin']),
+  async (req, res) => {
+    const { teamId, listId } = req.params;
+    if (![teamId, listId].every(id => mongoose.Types.ObjectId.isValid(id))) {
+      return res.status(400).send({ error: 'Invalid teamId or listId' });
+    }
+    try {
+      const list = await List.findOne({ _id: listId, teamId });
+      if (!list) return res.status(404).send({ error: 'List not found or unauthorized' });
+
+      const tasks = await Task.find({ _listId: listId });
+      // Call AI scheduler microservice
+      const { data } = await axios.post('http://localhost:5001/api/schedule', { tasks });
+      res.status(200).json(data);
+    } catch (err) {
+      console.error("AI Scheduler Error (team):", err.toString());
+      res.status(500).send({ error: 'AI service failed' });
+    }
+  }
+);
+
 // CREATE A NEW TEAM (you become admin)
 app.post('/teams', authenicate, async (req, res) => {
   const { name } = req.body;
@@ -822,14 +873,39 @@ app.get('/teams', authenicate, async (req, res) => {
 
 /**
  * GET /teams/:teamId/members
- * Purpose: list all members + roles
+ * Purpose: list all members + roles (User and GoogleUser)
  */
 app.get('/teams/:teamId/members', authenicate, async (req, res) => {
-  const team = await Team.findById(req.params.teamId)
-    .populate('memberships.userId', 'email name');
-  if (!team) return res.status(404).send({ message: 'Team not found' });
-  res.send(team.memberships);
+  const team = await Team.findById(req.params.teamId).lean();
+  if (!team) return res.status(404).send({ error: 'Team not found' });
+
+  // collect all distinct member ids
+  const ids = team.memberships.map(m => m.userId);
+
+  // fetch docs from both collections in parallel
+  const [users, gUsers] = await Promise.all([
+    User.find({ _id: { $in: ids } }, 'email name').lean(),
+    GoogleUser.find({ _id: { $in: ids } }, 'email name').lean()
+  ]);
+
+  // map them by id for O(1) lookup
+  const byId = Object.fromEntries(
+    [...users, ...gUsers].map(u => [u._id.toString(), u])
+  );
+
+  // attach details to each membership
+  const memberships = team.memberships.map(m => ({
+    userId: {
+      _id: m.userId,
+      email: byId[m.userId.toString()]?.email || '',
+      name : byId[m.userId.toString()]?.name  || ''
+    },
+    role: m.role
+  }));
+
+  res.send(memberships);
 });
+
 
 /**
  * PATCH /teams/:teamId/members/:userId
@@ -889,5 +965,57 @@ app.delete('/teams/:teamId/members/:userId', authenicate, async (req, res) => {
 
   res.send({ message: 'User removed and notified' });
 });
+
+/**
+ * GET /teams/:teamId/members/:memberId/stats
+ * Purpose: Get task stats for a specific team member
+ */
+app.get(
+  '/teams/:teamId/members/:memberId/stats',
+  authenicate,
+  authorizeTeam(['admin', 'editor', 'viewer']), // viewer+ can fetch stats
+  async (req, res) => {
+    const { teamId, memberId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(teamId) || !mongoose.Types.ObjectId.isValid(memberId)) {
+      return res.status(400).send({ error: 'Invalid teamId or memberId' });
+    }
+
+    try {
+      // Fetch all lists under the team
+      const lists = await List.find({ teamId }).select('_id');
+      const listIds = lists.map(l => l._id);
+
+      // If no lists, return 0s
+      if (listIds.length === 0) {
+        return res.status(200).json({ total: 0, done: 0, overdue: 0 });
+      }
+
+      // Get current date for overdue check
+      const now = new Date();
+
+      // Fetch all tasks under these lists
+      const allTasks = await Task.find({
+        _listId: { $in: listIds }
+      });
+
+      // Filter those manually created by the user
+      const userTasks = allTasks.filter(t => t._teamId?.toString() === teamId);
+
+      const total = userTasks.length;
+      const done = userTasks.filter(t => t.completed).length;
+      const overdue = userTasks.filter(t => {
+        if (!t.dueDate || t.completed) return false;
+        return new Date(t.dueDate) < now;
+      }).length;
+
+      return res.status(200).json({ total, done, overdue });
+    } catch (err) {
+      console.error("Error fetching member stats:", err);
+      res.status(500).send({ error: 'Internal Server Error' });
+    }
+  }
+);
+
 
 module.exports = app;

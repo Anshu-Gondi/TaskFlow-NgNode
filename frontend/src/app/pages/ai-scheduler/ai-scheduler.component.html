@@ -9,6 +9,18 @@
       {{ loading ? 'Thinking…' : 'Generate Optimized Schedule' }}
     </button>
 
+    <!-- Apply Order Button -->
+    <button
+      *ngIf="schedule.length"
+      class="button is-primary is-medium schedule-button"
+      [disabled]="applying"
+      (click)="applySchedule()">
+      {{ applying ? 'Applying…' : 'Apply This Order to My Tasks' }}
+    </button>
+    <p *ngIf="applySuccess" class="has-text-success mt-2">
+      ✅ Task order updated!
+    </p>
+
     <!-- Result -->
     <div class="schedule-result" *ngIf="schedule.length">
       <h2 class="subtitle has-text-dark mt-4">📋 Recommended Task Order</h2>

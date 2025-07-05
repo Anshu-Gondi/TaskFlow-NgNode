@@ -64,7 +64,7 @@
       <button
         *ngIf="teamId"
         class="button is-small is-link is-light is-fullwidth mt-2"
-        (click)="toggleMembers()"
+        (click)="goToMembersPage()"
       >
         👥 Members
       </button>
@@ -140,45 +140,8 @@
     </p>
   </div>
 
-  <!-- ────── MEMBERS PANEL ────── -->
-  <div *ngIf="membersOpen" class="column is-full-mobile is-clipped members-column">
-    <aside class="members-panel box">
-      <button class="delete is-pulled-right" (click)="toggleMembers()"></button>
-      <h2 class="subtitle is-6 mb-3">Board Members</h2>
-
-      <ul>
-        <li *ngFor="let m of teamMembers" class="mb-2">
-          {{ m.userId.name || m.userId.email }}
-
-          <select
-            *ngIf="isAdmin && m.userId._id !== authSvc.currentUserId"
-            class="select is-small ml-2"
-            [(ngModel)]="m.role"
-            (change)="changeRole(m.userId._id, m.role)"
-          >
-            <option value="admin">Admin</option>
-            <option value="editor">Editor</option>
-            <option value="viewer">Viewer</option>
-          </select>
-
-          <span *ngIf="!isAdmin || m.userId._id === authSvc.currentUserId" class="tag is-light ml-2 is-size-7">
-            {{ m.role }}
-          </span>
-
-          <button
-            *ngIf="isAdmin && m.userId._id !== authSvc.currentUserId"
-            class="button is-small is-danger ml-2"
-            (click)="kick(m.userId._id)"
-          >
-            Kick
-          </button>
-        </li>
-      </ul>
-    </aside>
-  </div>
+  <!-- ────── FLOATING ADD TASK BUTTON ────── -->
+  <button class="circle-add-button" (click)="onCreateTaskClick()">
+    <img src="/plus-icon.svg" alt="Add Task" />
+  </button>
 </div>
-
-<!-- ────── FLOATING ADD TASK BUTTON ────── -->
-<button class="circle-add-button" (click)="onCreateTaskClick()">
-  <img src="/plus.svg" alt="Add Task" />
-</button>

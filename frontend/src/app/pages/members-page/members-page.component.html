@@ -1,0 +1,188 @@
+<!-- Toast area -->
+<div class="toast-stack">
+  <div
+    *ngFor="let t of toasts"
+    class="notification animated-toast"
+    [ngClass]="t.type"
+  >
+    {{ t.message }}
+  </div>
+</div>
+
+<div class="members-page-bg">
+  <div class="members-glass-card">
+    <h1 class="members-title">👥 Board Members</h1>
+
+    <!-- ‼️ Replace everything from <div class="members-count…"> to the start of <div class="members-list"> -->
+    <div class="members-header-row mb-3" *ngIf="isAdmin || members.length">
+      <!-- total counter (always) -->
+      <span class="tag is-info is-medium">Total: {{ memberCount }}</span>
+
+      <!-- selected counter (admin only) -->
+      <span *ngIf="isAdmin" class="tag is-warning is-medium ml-2">
+        Selected: {{ selectedCount }}
+      </span>
+
+      <!-- Select‑all checkbox (admin only) -->
+      <label *ngIf="isAdmin" class="checkbox ml-3 mr-2">
+        <input
+          type="checkbox"
+          (change)="toggleAllSelections($event)"
+          [checked]="selectedCount === selectableCount && selectableCount > 0"
+        />
+        Select All
+      </label>
+
+      <!-- inline buttons (admin only) -->
+      <button
+        *ngIf="isAdmin"
+        class="button is-success is-small mr-1"
+        [disabled]="selectedCount === 0"
+        (click)="bulkPromote()"
+      >
+        <i class="fa-solid fa-arrow-up"></i>
+      </button>
+      <button
+        *ngIf="isAdmin"
+        class="button is-warning is-small mr-1"
+        [disabled]="selectedCount === 0"
+        (click)="bulkDemote()"
+      >
+        <i class="fa-solid fa-arrow-down"></i>
+      </button>
+      <button
+        *ngIf="isAdmin"
+        class="button is-danger is-small"
+        [disabled]="selectedCount === 0"
+        (click)="bulkKick()"
+      >
+        <i class="fa-solid fa-user-xmark"></i>
+      </button>
+    </div>
+
+    <div class="members-list">
+      <ng-container *ngIf="members.length; else noMembers">
+        <div *ngFor="let m of members" class="member-card">
+          <!-- Select checkbox -->
+          <input
+            type="checkbox"
+            [(ngModel)]="m.selected"
+            [disabled]="m.userId._id === currentUserId"
+            class="member-select-checkbox"
+            title="Select this member"
+          />
+
+          <!-- Member Info -->
+          <div class="member-info">
+            <span class="member-name">
+              <strong>{{
+                m.userId.name || m.userId.email || "No Name"
+              }}</strong>
+            </span>
+            <span *ngIf="m.userId.email" class="member-email">
+              {{ m.userId.email }}
+            </span>
+          </div>
+
+          <!-- Role + Stats + Admin Controls -->
+          <div class="member-role">
+            <div class="role-and-stats">
+              <span class="tag is-light is-size-7">{{ m.role }}</span>
+              <span
+                *ngIf="m.stats"
+                class="stats-pill"
+                title="Done / Total (Overdue)"
+              >
+                {{ m.stats.done }} / {{ m.stats.total }}
+                <span *ngIf="m.stats.overdue" class="overdue"
+                  >({{ m.stats.overdue }})</span
+                >
+              </span>
+            </div>
+            <!-- Admin Controls: always visible for admins (except self) -->
+            <div
+              class="admin-actions"
+              *ngIf="isAdmin && m.userId._id !== currentUserId"
+            >
+              <!-- Promote -->
+              <button
+                class="button is-success is-small mr-1 animated-button"
+                [disabled]="m.role === 'admin'"
+                (click)="changeRole(m.userId._id, getHigherRole(m.role))"
+                title="Promote"
+              >
+                <i class="fa-solid fa-arrow-up"></i>
+              </button>
+              <!-- Demote -->
+              <button
+                class="button is-warning is-small mr-1 animated-button"
+                [disabled]="m.role === 'viewer'"
+                (click)="changeRole(m.userId._id, getLowerRole(m.role))"
+                title="Demote"
+              >
+                <i class="fa-solid fa-arrow-down"></i>
+              </button>
+              <!-- Kick -->
+              <button
+                class="button is-danger is-small animated-button"
+                (click)="openKickModal(m.userId._id)"
+                title="Kick"
+              >
+                <i class="fa-solid fa-user-xmark"></i>
+              </button>
+              <!-- Role dropdown (optional, for direct set) -->
+              <div class="select is-small animated-select has-icons-left ml-2">
+                <select
+                  [(ngModel)]="m.role"
+                  (change)="changeRole(m.userId._id, m.role)"
+                >
+                  <option value="admin">Admin</option>
+                  <option value="editor">Editor</option>
+                  <option value="viewer">Viewer</option>
+                </select>
+                <span class="icon is-small is-left" [ngSwitch]="m.role">
+                  <i *ngSwitchCase="'admin'" class="fa-solid fa-crown"></i>
+                  <i
+                    *ngSwitchCase="'editor'"
+                    class="fa-solid fa-pen-to-square"
+                  ></i>
+                  <i *ngSwitchDefault class="fa-solid fa-eye"></i>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+
+      <ng-template #noMembers>
+        <div class="has-text-grey mt-4" style="text-align: center">
+          No members found in this team.
+        </div>
+      </ng-template>
+    </div>
+  </div>
+</div>
+
+<!-- Kick Modal -->
+<div class="modal" [ngClass]="{ 'is-active': confirmKickId }">
+  <div class="modal-background" (click)="closeKickModal()"></div>
+  <div class="modal-card" tabindex="-1">
+    <header class="modal-card-head">
+      <p class="modal-card-title">Remove Member</p>
+      <button
+        class="delete"
+        aria-label="close"
+        (click)="closeKickModal()"
+      ></button>
+    </header>
+    <section class="modal-card-body">
+      Are you sure you want to remove this member from the team?
+    </section>
+    <footer class="modal-card-foot">
+      <button class="button is-danger" (click)="confirmKick()">
+        Yes, remove
+      </button>
+      <button class="button" (click)="closeKickModal()">Cancel</button>
+    </footer>
+  </div>
+</div>

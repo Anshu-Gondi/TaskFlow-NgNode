@@ -53,6 +53,13 @@ export const routes: Routes = [
     path: 'workspace/team/:teamId/lists/:listId/ai-scheduler',
     component: AiSchedulerComponent,
   },
+  {
+    path: 'workspace/team/:teamId/members',
+    loadComponent: () =>
+      import('./pages/members-page/members-page.component').then(
+        (m) => m.MembersPageComponent
+      ),
+  },
 
   /* ───── Team Hub ───── */
   {

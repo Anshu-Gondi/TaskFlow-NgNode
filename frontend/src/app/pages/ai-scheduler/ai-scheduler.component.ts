@@ -18,6 +18,8 @@ export class AiSchedulerComponent implements OnInit {
 
   schedule: Task[] = [];
   loading = false;
+  applying = false;
+  applySuccess = false;
 
   constructor(
     private taskSvc: TaskService,
@@ -43,19 +45,47 @@ export class AiSchedulerComponent implements OnInit {
 
     this.loading = true;
     this.schedule = [];
+    this.applySuccess = false;
 
     this.taskSvc
       .getAiSchedule(this.listId, this.workspaceType === 'team', this.teamId ?? undefined)
-      .subscribe({
-        next: (result: Task[]) => {
+      .subscribe(
+        (result: Task[]) => {
           this.schedule = result;
           this.loading = false;
         },
-        error: (err: any) => {
+        (err: any) => {
           console.error('AI scheduling failed:', err);
           alert('Failed to generate schedule.');
           this.loading = false;
-        },
+        }
+      );
+  }
+
+  applySchedule(): void {
+    if (!this.schedule.length) return;
+    this.applying = true;
+    this.applySuccess = false;
+
+    // For each task, update its sortOrder (or a custom field)
+    // We'll use the index in the schedule as the new order
+    const updates = this.schedule.map((task, idx) => {
+      // Add/Update a sortOrder property
+      return this.taskSvc.updateTaskOrder(
+        task,
+        idx
+      );
+    });
+
+    // Wait for all updates to finish
+    Promise.all(updates.map(obs => obs.toPromise()))
+      .then(() => {
+        this.applying = false;
+        this.applySuccess = true;
+      })
+      .catch(() => {
+        this.applying = false;
+        alert('Failed to apply new order.');
       });
   }
 
