@@ -898,7 +898,7 @@ app.get('/teams/:teamId/members', authenicate, async (req, res) => {
     userId: {
       _id: m.userId,
       email: byId[m.userId.toString()]?.email || '',
-      name : byId[m.userId.toString()]?.name  || ''
+      name: byId[m.userId.toString()]?.name || ''
     },
     role: m.role
   }));
@@ -941,30 +941,59 @@ const { sendEmail } = require('./utils/sendEmail');
 // ───────── DELETE (kick) ─────────
 app.delete('/teams/:teamId/members/:userId', authenicate, async (req, res) => {
   const team = await Team.findById(req.params.teamId);
-  const userToRemove = await User.findById(req.params.userId);
+  const userToRemove =
+    (await User.findById(req.params.userId)) ||
+    (await GoogleUser.findById(req.params.userId));
 
-  if (!team || !userToRemove)
-    return res.status(404).send({ message: 'Invalid team or user' });
+  if (!team || !userToRemove) {
+    return res.status(404).send({ message: 'Team or user not found' });
+  }
 
   const requester = team.memberships.find(m => m.userId.toString() === req.user_id);
-  if (!requester || requester.role !== 'admin')
-    return res.status(403).send({ message: 'Forbidden' });
-  if (req.user_id === req.params.userId)
-    return res.status(400).send({ message: 'Cannot kick yourself' });
+  if (!requester || requester.role !== 'admin') {
+    return res.status(403).send({ message: 'Only team admins can remove members' });
+  }
 
+  if (req.user_id === req.params.userId) {
+    return res.status(400).send({ message: 'You cannot remove yourself from the team' });
+  }
+
+  // Remove the user
   team.memberships = team.memberships.filter(
     m => m.userId.toString() !== req.params.userId
   );
   await team.save();
 
+  const toEmail = process.env.NODE_ENV === 'production'
+    ? userToRemove.email
+    : 'agondi982@gmail.com';
+
+  // Optional: log a dev warning
+  if (process.env.NODE_ENV !== 'production') {
+    console.warn(`⚠️ Dev Mode: Email redirected to ${toEmail} instead of ${userToRemove.email}`);
+  }
+
+  // Send polite removal notice
   await sendEmail({
-    to: userToRemove.email,
-    subject: `You were removed from team "${team.name}"`,
-    text: `Hello ${userToRemove.name || 'User'},\n\nYou have been removed from the team "${team.name}" by an admin.\n\n- TaskFlow`,
+    to: toEmail,
+    subject: `You've been removed from "${team.name}" on TaskFlow`,
+    text: `
+Hi ${userToRemove.name || 'there'},
+
+This is to let you know that you've been removed from the team "${team.name}" by one of the team admins.
+
+If you believe this was a mistake or have questions, please reach out to the team admin directly.
+
+Wishing you all the best,
+– The TaskFlow Team
+    `.trim()
   });
 
-  res.send({ message: 'User removed and notified' });
+  res.send({
+    message: `✅ ${userToRemove.name || 'User'} has been removed from the team and notified via email.`
+  });
 });
+
 
 /**
  * GET /teams/:teamId/members/:memberId/stats

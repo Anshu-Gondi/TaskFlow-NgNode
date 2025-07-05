@@ -86,11 +86,22 @@ export class MembersPageComponent implements OnInit {
   }
   confirmKick() {
     if (!this.teamId || !this.confirmKickId) return;
+
     const targetId = this.confirmKickId;
     this.closeKickModal();
-    this.teamSvc.removeMember(this.teamId, targetId).subscribe(() => {
-      this.toast('Member removed', 'is-danger');
-      this.loadMembers();
+
+    this.teamSvc.removeMember(this.teamId, targetId).subscribe({
+      next: () => {
+        this.toast('Member removed', 'is-danger');
+        this.loadMembers();
+      },
+      error: (err) => {
+        console.error('Kick failed:', err);
+        this.toast(
+          `Kick failed: ${err?.error?.message || 'Unknown error'}`,
+          'is-warning'
+        );
+      },
     });
   }
 
